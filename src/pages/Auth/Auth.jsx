@@ -19,7 +19,7 @@ const Auth = () => {
       </header>
 
       <main className="auth-main">
-        <SignIn/>
+        <SignIn />
       </main>
 
       <footer className="auth-footer">

@@ -1,10 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import Features from "../../components/Features";
 import Footer from "../../components/Footer";
+import { useSelector } from "react-redux";
 import { WebRoutes } from "../../routes/WebRoutes";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+
   return (
     <section className="relative pt-32 pb-20 bg-gradient-to-b from-[#0a0a0f] via-[#0f0f1a] to-black text-white overflow-hidden">
       <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-indigo-600/20 rounded-full blur-[150px]"></div>
@@ -22,7 +25,7 @@ const Home = () => {
           Branch, commit, and merge content seamlessly across your entire organization.
         </p>
         <div className="flex justify-center gap-4 mb-16">
-          <button onClick={() => navigate(WebRoutes.AUTH())} className="bg-indigo-600 hover:cursor-pointer hover:bg-indigo-500 px-6 py-3 rounded-lg text-sm font-medium shadow-xl shadow-indigo-600/40 transition">
+          <button onClick={() => navigate(isAuthenticated ? WebRoutes.DASHBOARD() : WebRoutes.AUTH())} className="bg-indigo-600 hover:cursor-pointer hover:bg-indigo-500 px-6 py-3 rounded-lg text-sm font-medium shadow-xl shadow-indigo-600/40 transition">
             Start Committing →
           </button>
           <button className="bg-white/5 border border-white/10 hover:bg-white/10 px-6 py-3 rounded-lg text-sm font-medium transition">
