@@ -8,6 +8,12 @@ const commitSchema = new mongoose.Schema(
       trim: true,
       maxlength: 500,
     },
+    type: {
+      type: String,
+      enum: ["create", "update", "delete", "commit", "sync"],
+      default: "commit",
+      index: true,
+    },
     projectId: {
       type: String,
       required: true,

@@ -26,6 +26,20 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "main",
     },
+    collaborators: [
+      {
+        userId: {
+          type: String,
+          required: true,
+          index: true,
+        },
+        permission: {
+          type: String,
+          enum: ["read", "write", "admin"],
+          default: "read",
+        },
+      },
+    ],
     isPublic: {
       type: Boolean,
       default: false,

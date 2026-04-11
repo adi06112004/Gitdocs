@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Users } from "lucide-react";
 
 import Sidebar from "../../components/Sidebar";
-import CollaboratorsModal from "../../components/CollaboratorsModal";
 
 import {
   setCurrentProject,
   setCurrentBranchForProject,
   fetchProjectsRequest,
 } from "../../store/slices/projectSlice";
+import { fetchCommitsRequest } from "../../store/slices/commitSlice";
 import { createDocumentRequest } from "../../store/slices/documentSlice";
 import { createVersionRequest } from "../../store/slices/versionSlice";
-import { fetchCollaboratorsRequest } from "../../store/slices/collaboratorSlice";
+import { projectApiService } from "../../services/ProjectApiService";
+import { versionApiService } from "../../services/VersionApiService";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -27,13 +27,22 @@ export default function ProjectDetailPage() {
     error,
   } = useSelector((state) => state.documents);
   const { loading: branchLoading } = useSelector((state) => state.versions);
+  const { commits } = useSelector((state) => state.commits);
+  const { user } = useSelector((state) => state.auth);
 
   const [showCreateDocModal, setShowCreateDocModal] = useState(false);
   const [showCreateBranchModal, setShowCreateBranchModal] = useState(false);
-  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [newDocName, setNewDocName] = useState("");
   const [newDocContent, setNewDocContent] = useState("");
   const [newBranchName, setNewBranchName] = useState("");
+  const [collaborators, setCollaborators] = useState([]);
+  const [memberUserId, setMemberUserId] = useState("");
+  const [memberPermission, setMemberPermission] = useState("read");
+  const [syncSourceBranch, setSyncSourceBranch] = useState("main");
+  const [syncTargetBranch, setSyncTargetBranch] = useState("main");
+  const [syncMode, setSyncMode] = useState("push");
+  const [statusMessage, setStatusMessage] = useState("");
 
   const project = projects.find((p) => p.id?.toString() === id);
 
@@ -44,10 +53,24 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (project) {
       dispatch(setCurrentProject(project));
-      // Fetch collaborators for this project
-      dispatch(fetchCollaboratorsRequest(project.id));
+      dispatch(
+        fetchCommitsRequest({ projectId: project.id, branch: project.currentBranch }),
+      );
     }
   }, [project, dispatch]);
+
+  useEffect(() => {
+    if (!project) return;
+    const loadCollaborators = async () => {
+      try {
+        const response = await projectApiService.getCollaborators(project.id);
+        setCollaborators(response || []);
+      } catch (loadError) {
+        setCollaborators([]);
+      }
+    };
+    loadCollaborators();
+  }, [project]);
 
   if (!project) {
     return (
@@ -90,7 +113,67 @@ export default function ProjectDetailPage() {
 
   const handleBranchChange = (branch) => {
     dispatch(setCurrentBranchForProject({ projectId: project.id, branch }));
+    dispatch(fetchCommitsRequest({ projectId: project.id, branch }));
   };
+
+  const handleSavePermission = async () => {
+    if (!memberUserId.trim()) return;
+    try {
+      const response = await projectApiService.upsertCollaborator(project.id, {
+        userId: memberUserId.trim(),
+        permission: memberPermission,
+      });
+      setCollaborators(response || []);
+      setMemberUserId("");
+      setMemberPermission("read");
+      setStatusMessage("Member permission updated.");
+      setTimeout(() => setStatusMessage(""), 1800);
+    } catch (permissionError) {
+      setStatusMessage(
+        permissionError?.response?.data?.message || "Failed to update permission.",
+      );
+      setTimeout(() => setStatusMessage(""), 2200);
+    }
+  };
+
+  const handleRemoveCollaborator = async (userId) => {
+    try {
+      const response = await projectApiService.removeCollaborator(project.id, userId);
+      setCollaborators(response || []);
+    } catch (removeError) {
+      setStatusMessage(
+        removeError?.response?.data?.message || "Failed to remove collaborator.",
+      );
+      setTimeout(() => setStatusMessage(""), 2200);
+    }
+  };
+
+  const handleBranchSync = async () => {
+    if (!syncSourceBranch || !syncTargetBranch || syncSourceBranch === syncTargetBranch) {
+      setStatusMessage("Choose two different branches.");
+      setTimeout(() => setStatusMessage(""), 2000);
+      return;
+    }
+    try {
+      const response = await versionApiService.syncBranch({
+        projectId: project.id,
+        sourceBranch: syncSourceBranch,
+        targetBranch: syncTargetBranch,
+        mode: syncMode,
+      });
+      setStatusMessage(`Synced ${response.updatedCount} docs (${response.fromBranch} -> ${response.toBranch}).`);
+      setTimeout(() => setStatusMessage(""), 2200);
+      dispatch(fetchCommitsRequest({ projectId: project.id, branch: project.currentBranch }));
+    } catch (syncError) {
+      setStatusMessage(syncError?.response?.data?.message || "Branch sync failed.");
+      setTimeout(() => setStatusMessage(""), 2200);
+    }
+  };
+
+  const canManagePermissions = user?.id === project.owner || user?.role === "admin";
+  const filteredCommits = commits.filter(
+    (c) => c.projectId === project.id && c.branch === project.currentBranch,
+  );
 
   return (
     <div className="bg-[#0B0F19] min-h-screen text-white">
@@ -106,15 +189,6 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Collaborators Button */}
-            <button
-              onClick={() => setShowCollaboratorsModal(true)}
-              className="bg-purple-600 hover:bg-purple-500 px-3 py-2 rounded text-sm flex items-center gap-2"
-            >
-              <Users size={16} />
-              Collaborators
-            </button>
-
             {/* Branch Selector */}
             <select
               value={project.currentBranch}
@@ -143,6 +217,67 @@ export default function ProjectDetailPage() {
             >
               + Document
             </button>
+
+            <button
+              onClick={() => setShowPermissionModal(true)}
+              className="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm"
+            >
+              Permissions
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-[#111827] border border-gray-800 rounded-xl p-4">
+          <h2 className="text-sm font-semibold mb-3 text-gray-200">
+            Branch Collaboration (Push/Pull)
+          </h2>
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Mode</p>
+              <select
+                value={syncMode}
+                onChange={(e) => setSyncMode(e.target.value)}
+                className="bg-[#0B0F19] border border-gray-700 px-3 py-2 rounded text-sm"
+              >
+                <option value="push">Push</option>
+                <option value="pull">Pull</option>
+              </select>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Source Branch</p>
+              <select
+                value={syncSourceBranch}
+                onChange={(e) => setSyncSourceBranch(e.target.value)}
+                className="bg-[#0B0F19] border border-gray-700 px-3 py-2 rounded text-sm"
+              >
+                {project.branches.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Target Branch</p>
+              <select
+                value={syncTargetBranch}
+                onChange={(e) => setSyncTargetBranch(e.target.value)}
+                className="bg-[#0B0F19] border border-gray-700 px-3 py-2 rounded text-sm"
+              >
+                {project.branches.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              onClick={handleBranchSync}
+              className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded text-sm"
+            >
+              Sync Branches
+            </button>
+            {statusMessage && <p className="text-xs text-indigo-300">{statusMessage}</p>}
           </div>
         </div>
 
@@ -175,6 +310,28 @@ export default function ProjectDetailPage() {
               No documents in this branch. Create one 🚀
             </div>
           )}
+        </div>
+
+        <div className="bg-[#111827] border border-gray-800 rounded-xl p-4">
+          <h2 className="text-sm font-semibold mb-3 text-gray-200">
+            Git History ({project.currentBranch})
+          </h2>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {filteredCommits.slice(0, 15).map((commit) => (
+              <div
+                key={commit.id}
+                className="border border-gray-800 rounded p-3 bg-[#0B0F19]"
+              >
+                <p className="text-sm text-gray-100">{commit.message}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {new Date(commit.createdAt).toLocaleString()} • {commit.author}
+                </p>
+              </div>
+            ))}
+            {filteredCommits.length === 0 && (
+              <p className="text-sm text-gray-400">No commits yet on this branch.</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -243,12 +400,75 @@ export default function ProjectDetailPage() {
         </Modal>
       )}
 
-      {/* COLLABORATORS MODAL */}
-      {showCollaboratorsModal && (
-        <CollaboratorsModal
-          projectId={project.id}
-          onClose={() => setShowCollaboratorsModal(false)}
-        />
+      {showPermissionModal && (
+        <Modal>
+          <h2 className="text-lg font-bold mb-4">Project Permissions</h2>
+
+          {canManagePermissions ? (
+            <div className="space-y-3">
+              <input
+                value={memberUserId}
+                onChange={(e) => setMemberUserId(e.target.value)}
+                placeholder="Collaborator userId"
+                className="w-full px-3 py-2 bg-[#0B0F19] border border-gray-600 rounded"
+              />
+              <select
+                value={memberPermission}
+                onChange={(e) => setMemberPermission(e.target.value)}
+                className="w-full px-3 py-2 bg-[#0B0F19] border border-gray-600 rounded"
+              >
+                <option value="read">Read</option>
+                <option value="write">Write</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              <button
+                onClick={handleSavePermission}
+                className="w-full bg-indigo-600 px-3 py-2 rounded"
+              >
+                Save Permission
+              </button>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 mb-3">
+              You can view collaborators but only owner/admin can change permissions.
+            </p>
+          )}
+
+          <div className="mt-4 space-y-2 max-h-52 overflow-y-auto">
+            {collaborators.map((member) => (
+              <div
+                key={member.userId}
+                className="bg-[#0B0F19] border border-gray-700 rounded p-3 flex justify-between items-center"
+              >
+                <div>
+                  <p className="text-sm">{member.userId}</p>
+                  <p className="text-xs text-gray-400 uppercase">{member.permission}</p>
+                </div>
+                {canManagePermissions && (
+                  <button
+                    onClick={() => handleRemoveCollaborator(member.userId)}
+                    className="text-xs text-red-400 hover:text-red-300"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+            {collaborators.length === 0 && (
+              <p className="text-sm text-gray-400">No collaborators added.</p>
+            )}
+          </div>
+
+          <div className="mt-4">
+            <button
+              onClick={() => setShowPermissionModal(false)}
+              className="w-full bg-gray-700 px-3 py-2 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

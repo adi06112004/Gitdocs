@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Activity, GitCommit, Download } from "lucide-react";
+import { Activity } from "lucide-react";
 import { fetchCommitsRequest } from "../../store/slices/commitSlice";
+import { fetchProjectsRequest } from "../../store/slices/projectSlice";
+import { projectApiService } from "../../services/ProjectApiService";
 
 const ITEMS_PER_PAGE = 15;
+const ROLLBACK_CACHE_KEY = "projectRollbackCache";
+const ROLLBACK_API_AVAILABLE_KEY = "rollbackApiAvailable";
 
 export default function ActivityPage() {
   const dispatch = useDispatch();
@@ -11,6 +15,10 @@ export default function ActivityPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterType, setFilterType] = useState("all");
   const [filterProject, setFilterProject] = useState("");
+  const [rollbackStatus, setRollbackStatus] = useState("");
+  const [rollbackApiAvailable, setRollbackApiAvailable] = useState(() => {
+    return localStorage.getItem(ROLLBACK_API_AVAILABLE_KEY) !== "false";
+  });
 
   const { projects } = useSelector((state) => state.projects);
 
@@ -18,9 +26,150 @@ export default function ActivityPage() {
     dispatch(fetchCommitsRequest());
   }, [dispatch]);
 
+  const parseSnapshot = (snapshot) => {
+    if (!snapshot) return null;
+    try {
+      return JSON.parse(snapshot);
+    } catch {
+      return null;
+    }
+  };
+
+  const getRollbackCache = () => {
+    try {
+      return JSON.parse(localStorage.getItem(ROLLBACK_CACHE_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  };
+
+  const fallbackRollback = async (activity) => {
+    const actionType = getActionType(activity);
+    const cache = getRollbackCache();
+    const cached = activity?.projectId ? cache[activity.projectId] : null;
+
+    if (actionType === "update") {
+      const match = String(activity.message || "").match(/Updated project:\s*(.*?)\s*->\s*(.*)$/i);
+      const parsed = parseSnapshot(activity.snapshot);
+      let previousName =
+        parsed?.before?.name ||
+        cached?.before?.name ||
+        (match ? match[1] : null);
+      let previousDescription =
+        parsed?.before?.description ??
+        cached?.before?.description ??
+        projects.find((p) => p.id === activity.projectId)?.description ??
+        "";
+
+      if (!activity.projectId || !previousName) {
+        throw new Error("Rollback snapshot not found for this update activity.");
+      }
+
+      await projectApiService.updateProject(activity.projectId, {
+        name: previousName,
+        description: previousDescription,
+      });
+      return "Rollback completed via fallback update.";
+    }
+
+    if (actionType === "delete") {
+      const parsed = parseSnapshot(activity.snapshot);
+      let deletedName =
+        parsed?.before?.name ||
+        cached?.before?.name ||
+        (String(activity.message || "").match(/Deleted project:\s*(.*)$/i)?.[1] || null);
+      let deletedDescription =
+        parsed?.before?.description ||
+        cached?.before?.description ||
+        "Restored from deleted activity";
+
+      if (!deletedName) {
+        throw new Error("Rollback snapshot not found for this delete activity.");
+      }
+
+      await projectApiService.createProject({
+        name: deletedName,
+        description: deletedDescription,
+      });
+      return "Deleted project restored via fallback create.";
+    }
+
+    throw new Error("Rollback is supported only for update/delete activities.");
+  };
+
+  const handleRollback = async (activity) => {
+    try {
+      if (rollbackApiAvailable) {
+        await projectApiService.rollbackProjectActivity(activity.id, {
+          projectId: activity.projectId,
+          type: getActionType(activity),
+          message: activity.message,
+          branch: activity.branch,
+          author: activity.author,
+        });
+      } else {
+        const fallbackMessage = await fallbackRollback(activity);
+        setRollbackStatus(fallbackMessage);
+        dispatch(fetchProjectsRequest());
+        dispatch(fetchCommitsRequest());
+        setTimeout(() => setRollbackStatus(""), 2200);
+        return;
+      }
+
+      setRollbackStatus("Rollback completed successfully.");
+      dispatch(fetchProjectsRequest());
+      dispatch(fetchCommitsRequest());
+      setTimeout(() => setRollbackStatus(""), 1800);
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        setRollbackApiAvailable(false);
+        localStorage.setItem(ROLLBACK_API_AVAILABLE_KEY, "false");
+        try {
+          const fallbackMessage = await fallbackRollback(activity);
+          setRollbackStatus(fallbackMessage);
+          dispatch(fetchProjectsRequest());
+          dispatch(fetchCommitsRequest());
+          setTimeout(() => setRollbackStatus(""), 2200);
+          return;
+        } catch (fallbackError) {
+          const fallbackText = fallbackError?.message || "Fallback rollback failed.";
+          setRollbackStatus(fallbackText);
+          setTimeout(() => setRollbackStatus(""), 2800);
+          return;
+        }
+      }
+
+      const message = error?.response?.data?.message || "Rollback failed.";
+      setRollbackStatus(message);
+      setTimeout(() => setRollbackStatus(""), 2600);
+    }
+  };
+
+  const getActionType = (activity) => {
+    if (activity?.type) {
+      return String(activity.type).toLowerCase();
+    }
+
+    const message = String(activity?.message || "").toLowerCase();
+    if (message.includes("created project") || message.includes("created")) {
+      return "create";
+    }
+    if (message.includes("updated project") || message.includes("updated")) {
+      return "update";
+    }
+    if (message.includes("deleted project") || message.includes("deleted")) {
+      return "delete";
+    }
+    if (message.includes("push") || message.includes("pull") || message.includes("sync")) {
+      return "sync";
+    }
+    return "commit";
+  };
+
   // Filter commits based on project and type
   const filteredCommits = commits.filter((commit) => {
-    const matchesType = filterType === "all" || commit.type === filterType;
+    const actionType = getActionType(commit);
+    const matchesType = filterType === "all" || actionType === filterType;
     const matchesProject = !filterProject || commit.projectId == filterProject;
     return matchesType && matchesProject;
   });
@@ -32,21 +181,6 @@ export default function ActivityPage() {
     startIndex + ITEMS_PER_PAGE,
   );
 
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case "create":
-        return "📄";
-      case "update":
-        return "✏️";
-      case "delete":
-        return "🗑️";
-      case "commit":
-        return "💾";
-      default:
-        return "📌";
-    }
-  };
-
   const getActivityColor = (type) => {
     switch (type) {
       case "create":
@@ -57,10 +191,23 @@ export default function ActivityPage() {
         return "text-red-500";
       case "commit":
         return "text-indigo-500";
+      case "sync":
+        return "text-cyan-500";
       default:
         return "text-gray-500";
     }
   };
+
+  const actionCounts = commits.reduce(
+    (acc, commit) => {
+      const action = getActionType(commit);
+      if (acc[action] !== undefined) {
+        acc[action] += 1;
+      }
+      return acc;
+    },
+    { create: 0, update: 0, delete: 0, commit: 0, sync: 0 },
+  );
 
   return (
     <div className="bg-[#0B0F19] min-h-screen text-white">
@@ -121,6 +268,12 @@ export default function ActivityPage() {
           <div className="bg-red-600 text-white p-3 rounded">{error}</div>
         )}
 
+        {rollbackStatus && (
+          <div className="bg-indigo-600/20 border border-indigo-500/50 text-indigo-200 p-3 rounded">
+            {rollbackStatus}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="text-gray-400">Loading activity...</div>
@@ -135,30 +288,20 @@ export default function ActivityPage() {
             {/* ACTIVITY TIMELINE */}
             <div className="space-y-4">
               {currentActivities.map((activity, index) => (
+                (() => {
+                  const actionType = getActionType(activity);
+                  return (
                 <div
                   key={activity.id || index}
-                  className="bg-[#111827] border border-gray-800 rounded-xl p-4 flex gap-4"
+                  className="bg-[#111827] border border-gray-800 rounded-xl p-4"
                 >
-                  {/* LEFT - ICON & LINE */}
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={`text-2xl ${getActivityColor(activity.type)}`}
-                    >
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    {index !== currentActivities.length - 1 && (
-                      <div className="w-0.5 h-12 bg-gray-800 mt-2"></div>
-                    )}
-                  </div>
-
-                  {/* RIGHT - CONTENT */}
-                  <div className="flex-1">
+                  <div>
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-medium">{activity.message}</h3>
                         <div className="flex gap-2 mt-2 flex-wrap">
                           <span className="text-xs bg-indigo-600/20 text-indigo-300 px-2 py-1 rounded">
-                            {activity.type}
+                            {actionType}
                           </span>
                           {activity.branch && (
                             <span className="text-xs bg-purple-600/20 text-purple-300 px-2 py-1 rounded">
@@ -172,17 +315,27 @@ export default function ActivityPage() {
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-400">
-                          {activity.authorName || "System"}
+                      <div className="text-right space-y-2">
+                        <p className="text-xs text-gray-400 uppercase">
+                          {actionType} action
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           {new Date(activity.createdAt).toLocaleString()}
                         </p>
+                        {(actionType === "update" || actionType === "delete") && (
+                          <button
+                            onClick={() => handleRollback(activity)}
+                            className="px-3 py-1 text-xs rounded bg-amber-600/20 border border-amber-500/50 text-amber-200 hover:bg-amber-600/30"
+                          >
+                            Rollback
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
+                  );
+                })()
               ))}
             </div>
 
@@ -219,25 +372,25 @@ export default function ActivityPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-indigo-500">
-                {commits.filter((c) => c.type === "commit").length}
+                {actionCounts.commit + actionCounts.sync}
               </p>
               <p className="text-xs text-gray-400 mt-1">Total Commits</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-500">
-                {commits.filter((c) => c.type === "create").length}
+                {actionCounts.create}
               </p>
               <p className="text-xs text-gray-400 mt-1">Created</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-500">
-                {commits.filter((c) => c.type === "update").length}
+                {actionCounts.update}
               </p>
               <p className="text-xs text-gray-400 mt-1">Updated</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-red-500">
-                {commits.filter((c) => c.type === "delete").length}
+                {actionCounts.delete}
               </p>
               <p className="text-xs text-gray-400 mt-1">Deleted</p>
             </div>

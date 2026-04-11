@@ -59,188 +59,33 @@
 - Version controller now creates branch records and keeps project branch list in sync
 - Project controller supports branch metadata in project payloads
 
-## ✅ Collaborators Feature - Frontend Implementation (COMPLETED)
+## 🚧 Next Work
 
-### 1. **Add Collaborators to Projects** ✅
+### 1. **Add collaborators to projects**
 
-**Frontend Completed:**
+- Implement project collaborators model and backend APIs
+- Allow project owners/admins to invite users to a project
+- Store collaborator roles and permissions per project
 
-- Created `CollaboratorsModal.jsx` component with invite form
-- Email input field for inviting users
-- Role selector (read/write/admin)
-- Remove collaborators with confirmation dialog
-- Update collaborator roles with dropdown
-- Toast notifications for success/error feedback
+### 2. **Collaborators working in the same project**
 
-**State Management:**
+- Enable multiple collaborators to view and edit the same project
+- Ensure real-time project membership updates across the frontend
+- Sync shared project state so collaborators see the same branches/documents
 
-- Created `collaboratorSlice.js` with actions: fetch, invite, remove, update
-- Created `collaboratorSaga.js` for async API operations
-- Added `collaboratorSelectors.js` with 8 utility functions
-- Integrated collaborator reducer into Redux store
+### 3. **Project-level permissions settings**
 
-**API Service:**
+- Add a project settings page for admin-level permission control
+- Support read/write access per collaborator, similar to GitHub
+- Allow project owner/admin to assign roles like `admin`, `write`, `read`
+- Enforce permissions in backend APIs and UI actions
 
-- Created `CollaboratorApiService.js` with 4 methods
-- Added routes to `ApiRoutes.js`:
-  - `GET /projects/:projectId/collaborators`
-  - `POST /projects/:projectId/collaborators/invite`
-  - `DELETE /projects/:projectId/collaborators/:userId`
-  - `PUT /projects/:projectId/collaborators/:userId`
+### 4. **UX polish for GitHub-style collaboration**
 
-**Files Created:**
-
-- `frontend/src/components/CollaboratorsModal.jsx`
-- `frontend/src/services/CollaboratorApiService.js`
-- `frontend/src/store/slices/collaboratorSlice.js`
-- `frontend/src/store/sagas/collaboratorSaga.js`
-- `frontend/src/store/selectors/collaboratorSelectors.js`
-
-**Files Updated:**
-
-- `frontend/src/store/index.js` (added collaborator reducer)
-- `frontend/src/store/saga.js` (added collaborator saga)
-- `frontend/src/routes/ApiRoutes.js` (added 4 endpoints)
-
-### 2. **Collaborators Working in Same Project** ✅
-
-**Frontend Completed:**
-
-- Created `CollaboratorsList.jsx` badge component
-- Shows up to 3 collaborator avatars with initials
-- Displays +X count for additional collaborators
-- Hover tooltips with names and roles
-
-**Real-time Sync:**
-
-- Collaborators auto-fetch when project opens
-- Changes instantly reflected in Redux state
-- All components re-render with updated data
-- LocalStorage persistence for offline access
-
-**Project Integration:**
-
-- Updated `ProjectDetailPage.jsx` with "Collaborators" button
-- Added collaborator fetch on project mount
-- Modal opens for full collaborator management
-- Shows button to invite and manage team
-
-- Updated `Projects.jsx` to show collaborator badges on each project card
-- Added branch count display
-- CollaboratorsList integrated on project cards
-
-**State Enhancement:**
-
-- Updated `projectSlice.js` with collaborators field
-- Added actions: updateProjectCollaborators, addProjectCollaborator, removeProjectCollaborator
-- Collaborators synced with project data
-
-### 3. **Real-time Project Membership Updates** ✅
-
-**Features Implemented:**
-
-- Redux state is single source of truth for collaborators
-- Fetch collaborators when project loads
-- Add new collaborator → instantly appears in list
-- Remove collaborator → instantly disappears
-- Update role → instantly reflects in UI
-- All UI components stay synchronized
-
-**Permission Model:**
-
-- **Read**: View projects and documents
-- **Write**: Create and edit documents, manage branches
-- **Admin**: Full access + manage collaborators
-
-**Selectors Created:**
-
-- `selectProjectCollaborators()` - Get all collaborators
-- `selectCollaboratorById()` - Get specific collaborator
-- `selectCollaboratorsByRole()` - Filter by role
-- `selectIsCollaborator()` - Check if user is collaborator
-- `selectHasAdminAccess()` - Check admin permission
-- `selectHasWriteAccess()` - Check write permission
-- `selectCollaboratorsLoading()` - For loading states
-- `selectCollaboratorsError()` - For error handling
-
-### 4. **Shared Project State Sync** ✅
-
-**Collaborator Data Structure:**
-
-```javascript
-{
-  id: "mongo_id",
-  projectId: "project_id",
-  userId: "user_id",
-  username: "username",
-  email: "email@example.com",
-  role: "write",  // read, write, or admin
-  createdAt: "2024-04-11T10:30:00Z"
-}
-```
-
-**Project Updates:**
-
-- Projects now include collaborators array
-- Collaborators synced in project state
-- Displayed on project list and detail pages
-- All branches/documents visible to collaborators
-
-## 🚧 Next Work (Backend Required)
-
-### 1. **Backend API Implementation**
-
-**Collaborator Endpoints to Implement:**
-
-```
-GET /projects/:projectId/collaborators
-   Response: Array of collaborator objects
-
-POST /projects/:projectId/collaborators/invite
-   Body: { email: string, role: string }
-   Response: New collaborator object
-
-PUT /projects/:projectId/collaborators/:userId
-   Body: { role: string }
-   Response: Updated collaborator object
-
-DELETE /projects/:projectId/collaborators/:userId
-   Response: { success: boolean }
-```
-
-**Database Schema:**
-
-```javascript
-CollaboratorSchema {
-  projectId: Reference to Project,
-  userId: Reference to User,
-  role: Enum['read', 'write', 'admin'],
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-### 2. **Permission Enforcement**
-
-- Validate email exists in users table
-- Prevent duplicate invitations
-- Check authorization before collaborator management
-- Enforce permissions in all APIs (read, write, delete operations)
-- Only admin/owner can manage collaborators
-
-### 3. **Integration with Existing Endpoints**
-
-- Include collaborators array in `GET /projects/:id` response
-- Return collaborators in `GET /projects` response
-- Include collaborators when creating projects
-- Sync collaborators with project updates
-
-### 4. **Project-level Permission Enforcement** (Future)
-
-- Document write: Check if collaborator role >= 'write'
-- Branch management: Check if collaborator role >= 'write'
-- Collaborator management: Check if collaborator role == 'admin'
-- Project delete: Check if owner or admin role
+- Create a settings panel within project details for collaborators
+- Show collaborator list with role badges
+- Display access status and invite history
+- Add branch and permission management controls
 
 ## 🔄 Updated Data Flow
 
@@ -290,50 +135,15 @@ Component Re-renders with New Data
 1. Navigate to: http://localhost:5174/settings
 2. Verify profile updates, password fields, and toggles behave correctly
 
-### 5. **Frontend Tests for Collaborators** ✅
+### 5. **Future Tests for Collaborators**
 
-**Test Invite Collaborator:**
-
-1. Open project detail page
-2. Click "Collaborators" button
-3. Enter valid email address
-4. Select role (read/write/admin)
-5. Click "Invite"
-6. Verify: Collaborator appears in list, success toast shown
-
-**Test Remove Collaborator:**
-
-1. Open "Collaborators" modal
-2. Find collaborator to remove
-3. Click trash/remove icon
-4. Confirm removal dialog
-5. Verify: Collaborator removed, toast shown
-
-**Test Update Role:**
-
-1. Open "Collaborators" modal
-2. Find collaborator
-3. Click role dropdown
-4. Select new role
-5. Verify: Role updates instantly
-
-**Test Collaborator Badges:**
-
-1. Go to Projects list page
-2. Each project shows collaborator avatars
-3. Hover over avatars to see names/roles
-4. See +X indicator if more than 3 collaborators
-
-**Test Real-time Sync:**
-
-1. Add/remove collaborator in modal
-2. See changes reflected immediately
-3. Open collaborators modal again
-4. Verify changes persisted
+- Verify inviting collaborators to a project
+- Verify collaborator permissions impact project actions
+- Verify collaborator views update in shared project contexts
 
 ## 📊 API Endpoints Used
 
-### Frontend Endpoints Currently Used:
+The implementation calls these API endpoints:
 
 ```
 GET  /api/versions          → versionApiService.getAllVersions()
@@ -349,30 +159,6 @@ POST /api/documents         → documentApiService.createDocument()
 GET  /api/projects          → projectApiService.getAllProjects()
 POST /api/projects          → projectApiService.createProject()
 ```
-
-### Collaborators Endpoints (Frontend Ready, Backend TODO):
-
-```
-GET  /projects/:projectId/collaborators
-     → collaboratorApiService.getProjectCollaborators()
-     Response: Array of collaborators
-
-POST /projects/:projectId/collaborators/invite
-     → collaboratorApiService.inviteCollaborator(projectId, data)
-     Body: { email: string, role: string }
-     Response: New collaborator object
-
-PUT  /projects/:projectId/collaborators/:userId
-     → collaboratorApiService.updateCollaborator(projectId, userId, data)
-     Body: { role: string }
-     Response: Updated collaborator object
-
-DELETE /projects/:projectId/collaborators/:userId
-       → collaboratorApiService.removeCollaborator(projectId, userId)
-       Response: { success: boolean }
-```
-
-**Status:** Frontend ready, awaiting backend implementation
 
 ## 🐛 Bug Fix Applied
 
@@ -426,60 +212,19 @@ No new dependencies added. Uses existing:
 
 ## ✨ Key Features
 
-### Completed Features:
-
-✅ All branch/version management
-✅ Activity tracking
-✅ User settings
+✅ No hardcoded data - all dynamic
 ✅ Fully responsive UI
 ✅ Loading states implemented
-✅ Error handling with toast notifications
+✅ Error handling
 ✅ Pagination support
 ✅ Filter capabilities
 ✅ Redux state management
+✅ Toast notifications
 ✅ Modal dialogs
 ✅ User authentication integration
 
-### Collaborators Features (Frontend Complete):
-
-✅ Invite collaborators by email
-✅ Assign roles (read/write/admin)
-✅ Remove collaborators with confirmation
-✅ Update collaborator permissions
-✅ Real-time state synchronization
-✅ Collaborator badges on project cards
-✅ Permission level descriptions
-✅ LocalStorage persistence
-✅ Complete error handling
-✅ Loading states for all operations
-
 ---
 
-**Frontend Status:** ✅ COMPLETE (Including Collaborators)
-**Backend Status:** ⏳ Awaiting Collaborators API Implementation
+**Status:** ✅ Implementation Complete and Running
 **Frontend Port:** 5174
 **Backend Port:** 5000
-
----
-
-## 📝 Summary of Changes for Collaborators
-
-**New Files Created (6):**
-
-1. `frontend/src/components/CollaboratorsModal.jsx` - Full collaborator management UI
-2. `frontend/src/components/CollaboratorsList.jsx` - Collaborator badge display
-3. `frontend/src/services/CollaboratorApiService.js` - API integration
-4. `frontend/src/store/slices/collaboratorSlice.js` - Redux state
-5. `frontend/src/store/sagas/collaboratorSaga.js` - Async operations
-6. `frontend/src/store/selectors/collaboratorSelectors.js` - Data selectors
-
-**Files Updated (6):**
-
-1. `frontend/src/store/index.js` - Added collaborator reducer
-2. `frontend/src/store/saga.js` - Added collaborator saga
-3. `frontend/src/routes/ApiRoutes.js` - Added 4 collaborator endpoints
-4. `frontend/src/store/slices/projectSlice.js` - Added collaborators field
-5. `frontend/src/pages/Projects/ProjectDetailPage.jsx` - Added collaborators button
-6. `frontend/src/pages/Projects/Projects.jsx` - Added collaborators badges
-
-**Total Code Added:** ~1,200 lines

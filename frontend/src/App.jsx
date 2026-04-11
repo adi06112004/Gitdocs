@@ -24,6 +24,7 @@ const App = () => {
       <Routes>
         <Route path={WebRoutes.HOME()} element={<Home />} />
         <Route path={WebRoutes.AUTH()} element={<Auth />} />
+        <Route path={WebRoutes.LOGIN()} element={<SignIn />} />
         <Route path={WebRoutes.SIGNIN()} element={<SignIn />} />
         <Route path={WebRoutes.CREATEACCOUNT()} element={<CreateAccount />} />
         <Route

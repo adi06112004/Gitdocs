@@ -31,6 +31,10 @@ class VersionApiService {
   deleteVersion(id) {
     return baseApiService.delete(apiRoutes.versions.delete.replace(':id', id));
   }
+
+  syncBranch(data) {
+    return baseApiService.post(apiRoutes.versions.sync, data);
+  }
 }
 
 export const versionApiService = VersionApiService.getInstance();

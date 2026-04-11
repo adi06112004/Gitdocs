@@ -1,8 +1,9 @@
 export const WebRoutes = {
     HOME:() => "/",
     AUTH:() => "/auth",
+    LOGIN: () => "/login",
     SIGNIN: () => "/signin",
-    CREATEACCOUNT: () => "createaccount",
+    CREATEACCOUNT: () => "/createaccount",
     DASHBOARD: () => "/dashboard",
     EDITOR: () => "/editor",
     DOCUMENTS: () => "/documents",

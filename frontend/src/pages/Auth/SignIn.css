@@ -1,4 +1,12 @@
 .auth-wrapper {
+  min-height: calc(100vh - 72px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 96px 16px 32px;
+  box-sizing: border-box;
   text-align: center;
 }
 
@@ -10,13 +18,20 @@
 }
 
 .auth-card {
-  width: 420px;
+  width: min(420px, 100%);
   padding: 40px;
   border-radius: 18px;
   background: rgba(20, 20, 40, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(30px);
   box-shadow: 0 0 60px rgba(108, 59, 255, 0.15);
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 24px;
+  }
 }
 
 .auth-header-content h2 {

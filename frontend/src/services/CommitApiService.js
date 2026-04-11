@@ -12,8 +12,8 @@ class CommitApiService {
     return CommitApiService.instance;
   }
 
-  getAllCommits() {
-    return baseApiService.get(apiRoutes.commits.getAll);
+  getAllCommits(params = {}) {
+    return baseApiService.get(apiRoutes.commits.getAll, params);
   }
 
   getCommitById(id) {

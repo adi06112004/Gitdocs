@@ -39,7 +39,7 @@ class BaseApiService {
         if (error.response && error.response.status === 401) {
           console.error("Session expired. Please login again.");
           localStorage.removeItem("auth");
-          window.location.href = "/login";
+          window.location.href = "/signin";
         }
 
         return Promise.reject(error);

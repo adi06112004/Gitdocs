@@ -5,7 +5,6 @@ import versionSaga from "./sagas/versionSaga";
 import projectSaga from "./sagas/projectSaga";
 import commitSaga from "./sagas/commitSaga";
 import userSaga from "./sagas/userSaga";
-import collaboratorSaga from "./sagas/collaboratorSaga";
 
 export default function* rootSaga() {
   yield all([
@@ -15,6 +14,5 @@ export default function* rootSaga() {
     projectSaga(),
     commitSaga(),
     userSaga(),
-    collaboratorSaga(),
   ]);
 }

@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { io } from "socket.io-client";
 import { updateDocumentRequest } from "../../store/slices/documentSlice";
+import { createCommitRequest } from "../../store/slices/commitSlice";
 import { documentApiService } from "../../services/DocumentApiService";
 import Editor from "../../components/Editor";
 import { Save, GitCommit, ArrowLeft } from "lucide-react";
@@ -124,6 +125,24 @@ export default function EditorPage() {
     }
   };
 
+  const handleCommit = () => {
+    if (!currentDoc) return;
+    const message = window.prompt("Commit message", "Update document");
+    if (!message || !message.trim()) return;
+
+    dispatch(
+      createCommitRequest({
+        message: message.trim(),
+        projectId: currentDoc.projectId,
+        documentId: currentDoc.id,
+        branch: currentDoc.branch || "main",
+        snapshot: content,
+      }),
+    );
+    setStatusMessage("Commit created.");
+    setTimeout(() => setStatusMessage(""), 1600);
+  };
+
   return (
     <div className="bg-[#0B0F19] min-h-screen text-white flex">
       <div className="mt-16 flex w-full h-[calc(100vh-64px)]">
@@ -158,7 +177,10 @@ export default function EditorPage() {
                 <Save size={14} /> Save
               </button>
 
-              <button className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded">
+              <button
+                onClick={handleCommit}
+                className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded"
+              >
                 <GitCommit size={14} /> Commit
               </button>
             </div>

@@ -7,7 +7,6 @@ import versionReducer from "./slices/versionSlice";
 import projectReducer from "./slices/projectSlice";
 import commitReducer from "./slices/commitSlice";
 import userReducer from "./slices/userSlice";
-import collaboratorReducer from "./slices/collaboratorSlice";
 
 import rootSaga from "./saga";
 
@@ -21,7 +20,6 @@ export const store = configureStore({
     projects: projectReducer,
     commits: commitReducer,
     users: userReducer,
-    collaborators: collaboratorReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ thunk: false }).concat(sagaMiddleware),

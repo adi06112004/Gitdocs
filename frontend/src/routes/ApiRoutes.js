@@ -14,6 +14,9 @@ export const apiRoutes = {
     create: "/projects",
     update: "/projects/:id",
     delete: "/projects/:id",
+    rollback: "/projects/rollback/:commitId",
+    collaborators: "/projects/:id/collaborators",
+    collaboratorByUser: "/projects/:id/collaborators/:userId",
   },
   documents: {
     getAll: "/documents",
@@ -35,6 +38,7 @@ export const apiRoutes = {
     create: "/versions",
     update: "/versions/:id",
     delete: "/versions/:id",
+    sync: "/versions/sync",
   },
   users: {
     getAll: "/users",
@@ -42,11 +46,5 @@ export const apiRoutes = {
     create: "/users",
     update: "/users/:id",
     delete: "/users/:id",
-  },
-  collaborators: {
-    getByProject: "/projects/:projectId/collaborators",
-    invite: "/projects/:projectId/collaborators/invite",
-    remove: "/projects/:projectId/collaborators/:userId",
-    update: "/projects/:projectId/collaborators/:userId",
   },
 };

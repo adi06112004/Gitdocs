@@ -11,12 +11,13 @@ import {
 } from "../slices/commitSlice";
 import { commitApiService } from "../../services/CommitApiService";
 
-function* fetchCommits() {
+function* fetchCommits(action) {
   try {
-    const response = yield call(commitApiService.getAllCommits);
+    const response = yield call(commitApiService.getAllCommits, action.payload || {});
     yield put(fetchCommitsSuccess(response));
   } catch (error) {
-    yield put(fetchCommitsFailure(error.message));
+    const message = error.response?.data?.message || error.message;
+    yield put(fetchCommitsFailure(message));
   }
 }
 
@@ -26,8 +27,9 @@ function* createCommit(action) {
     yield put(createCommitSuccess(response));
     toast.success("Commit created successfully!");
   } catch (error) {
-    yield put(createCommitFailure(error.message));
-    toast.error("Failed to create commit: " + error.message);
+    const message = error.response?.data?.message || error.message;
+    yield put(createCommitFailure(message));
+    toast.error("Failed to create commit: " + message);
   }
 }
 

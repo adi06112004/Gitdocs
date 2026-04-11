@@ -31,6 +31,34 @@ class ProjectApiService {
   deleteProject(id) {
     return baseApiService.delete(apiRoutes.projects.delete.replace(':id', id));
   }
+
+  rollbackProjectActivity(commitId, activityMeta = {}) {
+    return baseApiService.post(
+      apiRoutes.projects.rollback.replace(':commitId', commitId),
+      { activityMeta },
+    );
+  }
+
+  getCollaborators(projectId) {
+    return baseApiService.get(
+      apiRoutes.projects.collaborators.replace(':id', projectId),
+    );
+  }
+
+  upsertCollaborator(projectId, data) {
+    return baseApiService.post(
+      apiRoutes.projects.collaborators.replace(':id', projectId),
+      data,
+    );
+  }
+
+  removeCollaborator(projectId, userId) {
+    return baseApiService.delete(
+      apiRoutes.projects.collaboratorByUser
+        .replace(':id', projectId)
+        .replace(':userId', userId),
+    );
+  }
 }
 
 export const projectApiService = ProjectApiService.getInstance();
