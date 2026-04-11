@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { Users } from "lucide-react";
 
 import Sidebar from "../../components/Sidebar";
+import CollaboratorsModal from "../../components/CollaboratorsModal";
 
 import {
   setCurrentProject,
@@ -11,6 +13,7 @@ import {
 } from "../../store/slices/projectSlice";
 import { createDocumentRequest } from "../../store/slices/documentSlice";
 import { createVersionRequest } from "../../store/slices/versionSlice";
+import { fetchCollaboratorsRequest } from "../../store/slices/collaboratorSlice";
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
@@ -27,6 +30,7 @@ export default function ProjectDetailPage() {
 
   const [showCreateDocModal, setShowCreateDocModal] = useState(false);
   const [showCreateBranchModal, setShowCreateBranchModal] = useState(false);
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false);
   const [newDocName, setNewDocName] = useState("");
   const [newDocContent, setNewDocContent] = useState("");
   const [newBranchName, setNewBranchName] = useState("");
@@ -40,6 +44,8 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (project) {
       dispatch(setCurrentProject(project));
+      // Fetch collaborators for this project
+      dispatch(fetchCollaboratorsRequest(project.id));
     }
   }, [project, dispatch]);
 
@@ -100,6 +106,15 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Collaborators Button */}
+            <button
+              onClick={() => setShowCollaboratorsModal(true)}
+              className="bg-purple-600 hover:bg-purple-500 px-3 py-2 rounded text-sm flex items-center gap-2"
+            >
+              <Users size={16} />
+              Collaborators
+            </button>
+
             {/* Branch Selector */}
             <select
               value={project.currentBranch}
@@ -226,6 +241,14 @@ export default function ProjectDetailPage() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {/* COLLABORATORS MODAL */}
+      {showCollaboratorsModal && (
+        <CollaboratorsModal
+          projectId={project.id}
+          onClose={() => setShowCollaboratorsModal(false)}
+        />
       )}
     </div>
   );

@@ -5,7 +5,9 @@ import {
   createProjectRequest,
   fetchProjectsRequest,
 } from "../../store/slices/projectSlice";
+import CollaboratorsList from "../../components/CollaboratorsList";
 import { WebRoutes } from "../../routes/WebRoutes";
+import Sidebar from "../../components/Sidebar";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -53,6 +55,7 @@ export default function Projects() {
 
   return (
     <div className="bg-[#0B0F19] min-h-screen text-white">
+      <Sidebar />
       {/* MAIN */}
       <div className="ml-64 pt-20 px-6 space-y-6">
         {/* HEADER */}
@@ -84,16 +87,26 @@ export default function Projects() {
             >
               <div className="flex justify-between items-center">
                 {/* LEFT */}
-                <div>
+                <div className="flex-1">
                   <h2 className="text-lg font-semibold">{project.name}</h2>
                   <p className="text-sm text-gray-400 mt-1">
                     {project.description}
                   </p>
+                  <div className="mt-3">
+                    <CollaboratorsList projectId={project.id} />
+                  </div>
                 </div>
 
                 {/* RIGHT */}
-                <div className="text-sm text-gray-400">
-                  Updated {new Date(project.createdAt).toLocaleDateString()}
+                <div className="text-right">
+                  <div className="text-sm text-gray-400">
+                    Updated {new Date(project.createdAt).toLocaleDateString()}
+                  </div>
+                  {project.branches && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      {project.branches.length} branches
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

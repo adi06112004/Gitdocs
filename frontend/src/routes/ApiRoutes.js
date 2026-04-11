@@ -43,4 +43,10 @@ export const apiRoutes = {
     update: "/users/:id",
     delete: "/users/:id",
   },
+  collaborators: {
+    getByProject: "/projects/:projectId/collaborators",
+    invite: "/projects/:projectId/collaborators/invite",
+    remove: "/projects/:projectId/collaborators/:userId",
+    update: "/projects/:projectId/collaborators/:userId",
+  },
 };

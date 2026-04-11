@@ -29,6 +29,7 @@ const projectSlice = createSlice({
         ...project,
         branches: project.branches || ["main"],
         currentBranch: project.currentBranch || "main",
+        collaborators: project.collaborators || [],
       }));
       localStorage.setItem("projects", JSON.stringify(state.projects));
     },
@@ -75,6 +76,35 @@ const projectSlice = createSlice({
         localStorage.setItem("projects", JSON.stringify(state.projects));
       }
     },
+    updateProjectCollaborators: (state, action) => {
+      const { projectId, collaborators } = action.payload;
+      const project = state.projects.find((p) => p.id === projectId);
+      if (project) {
+        project.collaborators = collaborators;
+        localStorage.setItem("projects", JSON.stringify(state.projects));
+      }
+    },
+    addProjectCollaborator: (state, action) => {
+      const { projectId, collaborator } = action.payload;
+      const project = state.projects.find((p) => p.id === projectId);
+      if (project && !project.collaborators) {
+        project.collaborators = [];
+      }
+      if (project && !project.collaborators.find((c) => c.userId === collaborator.userId)) {
+        project.collaborators.push(collaborator);
+        localStorage.setItem("projects", JSON.stringify(state.projects));
+      }
+    },
+    removeProjectCollaborator: (state, action) => {
+      const { projectId, userId } = action.payload;
+      const project = state.projects.find((p) => p.id === projectId);
+      if (project && project.collaborators) {
+        project.collaborators = project.collaborators.filter(
+          (c) => c.userId !== userId
+        );
+        localStorage.setItem("projects", JSON.stringify(state.projects));
+      }
+    },
   },
 });
 
@@ -90,6 +120,9 @@ export const {
   updateProject,
   addBranchToProject,
   setCurrentBranchForProject,
+  updateProjectCollaborators,
+  addProjectCollaborator,
+  removeProjectCollaborator,
 } = projectSlice.actions;
 
 export default projectSlice.reducer;
