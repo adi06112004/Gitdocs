@@ -6,33 +6,44 @@ import {
   fetchCollaboratorsSuccess,
   fetchCollaboratorsFailure,
   inviteCollaboratorRequest,
-  inviteCollaboratorSuccess,
   inviteCollaboratorFailure,
   removeCollaboratorRequest,
-  removeCollaboratorSuccess,
   removeCollaboratorFailure,
   updateCollaboratorRequest,
-  updateCollaboratorSuccess,
   updateCollaboratorFailure,
 } from "../slices/collaboratorSlice";
+import { fetchProjectsRequest } from "../slices/projectSlice";
 import { collaboratorApiService } from "../../services/CollaboratorApiService";
+
+function normalizeCollaborationResponse(response, projectId) {
+  if (response?.members) {
+    return {
+      projectId,
+      collaborators: response.members,
+      inviteHistory: response.inviteHistory || [],
+    };
+  }
+  return {
+    projectId,
+    collaborators: Array.isArray(response) ? response : [],
+    inviteHistory: [],
+  };
+}
 
 function* fetchCollaborators(action) {
   try {
     const response = yield call(
       collaboratorApiService.getProjectCollaborators,
-      action.payload
+      action.payload,
     );
     yield put(
-      fetchCollaboratorsSuccess({
-        projectId: action.payload,
-        collaborators: response,
-      })
+      fetchCollaboratorsSuccess(
+        normalizeCollaborationResponse(response, action.payload),
+      ),
     );
   } catch (error) {
     const message = error.response?.data?.message || error.message;
     yield put(fetchCollaboratorsFailure(message));
-    // Silently fail for now, as collaborators might not be implemented in backend yet
   }
 }
 
@@ -42,41 +53,41 @@ function* inviteCollaborator(action) {
     const response = yield call(
       collaboratorApiService.inviteCollaborator,
       projectId,
-      data
+      data,
     );
     yield put(
-      inviteCollaboratorSuccess({
-        projectId,
-        collaborator: response,
-      })
+      fetchCollaboratorsSuccess(
+        normalizeCollaborationResponse(response, projectId),
+      ),
     );
-    toast.success("Collaborator invited successfully!");
+    yield put(fetchProjectsRequest());
+    toast.success("Collaborator added successfully.");
   } catch (error) {
     const message = error.response?.data?.message || error.message;
     yield put(inviteCollaboratorFailure(message));
-    toast.error("Failed to invite collaborator: " + message);
+    toast.error(message);
   }
 }
 
 function* removeCollaborator(action) {
   try {
     const { projectId, userId } = action.payload;
-    yield call(
+    const response = yield call(
       collaboratorApiService.removeCollaborator,
       projectId,
-      userId
+      userId,
     );
     yield put(
-      removeCollaboratorSuccess({
-        projectId,
-        userId,
-      })
+      fetchCollaboratorsSuccess(
+        normalizeCollaborationResponse(response, projectId),
+      ),
     );
-    toast.success("Collaborator removed successfully!");
+    yield put(fetchProjectsRequest());
+    toast.success("Collaborator removed.");
   } catch (error) {
     const message = error.response?.data?.message || error.message;
     yield put(removeCollaboratorFailure(message));
-    toast.error("Failed to remove collaborator: " + message);
+    toast.error(message);
   }
 }
 
@@ -87,20 +98,19 @@ function* updateCollaborator(action) {
       collaboratorApiService.updateCollaborator,
       projectId,
       userId,
-      data
+      data,
     );
     yield put(
-      updateCollaboratorSuccess({
-        projectId,
-        userId,
-        updatedData: response,
-      })
+      fetchCollaboratorsSuccess(
+        normalizeCollaborationResponse(response, projectId),
+      ),
     );
-    toast.success("Collaborator role updated successfully!");
+    yield put(fetchProjectsRequest());
+    toast.success("Role updated.");
   } catch (error) {
     const message = error.response?.data?.message || error.message;
     yield put(updateCollaboratorFailure(message));
-    toast.error("Failed to update collaborator: " + message);
+    toast.error(message);
   }
 }
 

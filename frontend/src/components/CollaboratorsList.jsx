@@ -20,11 +20,11 @@ export default function CollaboratorsList({ projectId }) {
       <div className="flex items-center gap-1">
         {displayedCollaborators.map((collab) => (
           <div
-            key={collab.id}
-            className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:scale-110 transition"
-            title={`${collab.username || collab.email} (${collab.role})`}
+            key={collab.userId}
+            className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white cursor-pointer hover:scale-110 transition shrink-0"
+            title={`${collab.username || collab.email} (${collab.permission || collab.role})`}
           >
-            {(collab.username || collab.email)[0].toUpperCase()}
+            {(collab.username || collab.email || "?")[0].toUpperCase()}
           </div>
         ))}
         {remaining > 0 && (

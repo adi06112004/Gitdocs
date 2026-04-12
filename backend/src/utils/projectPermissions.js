@@ -1,4 +1,4 @@
-const normalizePermission = (permission) => {
+export const normalizePermission = (permission) => {
   const value = (permission || "read").toLowerCase();
   if (["read", "write", "admin"].includes(value)) {
     return value;
@@ -21,6 +21,9 @@ export const canReadProject = (project, user) => {
 
 export const canWriteProject = (project, user) => {
   if (!project || !user) return false;
+  if (project.isArchived && !canAdminProject(project, user)) {
+    return false;
+  }
   if (project.owner === user.id || user.role === "admin") return true;
   const collaborator = getCollaborator(project, user.id);
   if (!collaborator) return false;

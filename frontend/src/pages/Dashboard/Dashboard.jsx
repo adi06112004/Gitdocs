@@ -30,8 +30,7 @@ export default function Dashboard() {
   const uniqueAuthors = new Set(commits.map((c) => c.authorId)).size;
 
   return (
-    <div className="bg-[#0B0F19] min-h-screen text-white">
-      <div className="ml-64 pt-20 px-6 space-y-6">
+      <div className="space-y-6 w-full max-w-7xl mx-auto">
         {/* STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard
@@ -122,6 +121,5 @@ export default function Dashboard() {
           )}
         </div>
       </div>
-    </div>
   );
 }

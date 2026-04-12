@@ -71,6 +71,20 @@ const authSlice = createSlice({
         state.isAuthenticated = parsed.isAuthenticated;
       }
     },
+    updateAuthUser: (state, action) => {
+      if (!state.user) return;
+      state.user = { ...state.user, ...action.payload };
+      try {
+        const raw = localStorage.getItem("auth");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          parsed.user = state.user;
+          localStorage.setItem("auth", JSON.stringify(parsed));
+        }
+      } catch {
+        /* ignore */
+      }
+    },
   },
 });
 
@@ -83,6 +97,7 @@ export const {
   signupFailure,
   logout,
   loadAuthFromStorage,
+  updateAuthUser,
 } = authSlice.actions;
 
 export default authSlice.reducer;

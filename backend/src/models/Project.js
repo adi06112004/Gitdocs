@@ -40,6 +40,24 @@ const projectSchema = new mongoose.Schema(
         },
       },
     ],
+    inviteHistory: [
+      {
+        email: { type: String, required: true, lowercase: true, trim: true },
+        invitedBy: { type: String, required: true },
+        permission: {
+          type: String,
+          enum: ["read", "write", "admin"],
+          default: "read",
+        },
+        status: {
+          type: String,
+          enum: ["accepted", "pending"],
+          default: "accepted",
+        },
+        userId: { type: String, default: "" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     isPublic: {
       type: Boolean,
       default: false,

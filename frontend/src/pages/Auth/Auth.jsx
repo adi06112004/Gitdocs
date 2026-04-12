@@ -1,5 +1,7 @@
 import "./Auth.css";
+import { Link } from "react-router-dom";
 import SignIn from "./SignIn";
+import { WebRoutes } from "../../routes/WebRoutes";
 
 const Auth = () => {
   return (
@@ -11,8 +13,8 @@ const Auth = () => {
         </div>
 
         <nav className="auth-nav">
-          <a href="#">Documentation</a>
-          <a href="#">API</a>
+          <Link to={WebRoutes.DOCS()}>Documentation</Link>
+          <Link to={`${WebRoutes.DOCS()}#api`}>API</Link>
           <a href="#">Changelog</a>
           <div className="status-pill">Systems Operational</div>
         </nav>

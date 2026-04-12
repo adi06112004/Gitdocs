@@ -1,5 +1,7 @@
 import { FolderGit2 } from "lucide-react";
 import React from "react";
+import { Link } from "react-router-dom";
+import { WebRoutes } from "../routes/WebRoutes";
 
 const Footer = () => {
   return (
@@ -32,9 +34,30 @@ const Footer = () => {
           <div>
             <h3 className="text-white font-semibold mb-4">Resources</h3>
             <ul className="space-y-3 text-sm">
-              <li><a href="#" className="hover:text-white transition">Documentation</a></li>
-              <li><a href="#" className="hover:text-white transition">Guides</a></li>
-              <li><a href="#" className="hover:text-white transition">API Reference</a></li>
+              <li>
+                <Link
+                  to={WebRoutes.DOCS()}
+                  className="hover:text-white transition"
+                >
+                  Documentation
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={WebRoutes.DOCS()}
+                  className="hover:text-white transition"
+                >
+                  Guides
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={`${WebRoutes.DOCS()}#api`}
+                  className="hover:text-white transition"
+                >
+                  API Reference
+                </Link>
+              </li>
               <li><a href="#" className="hover:text-white transition">Community</a></li>
             </ul>
           </div>

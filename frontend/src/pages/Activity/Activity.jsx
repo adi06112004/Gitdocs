@@ -210,8 +210,7 @@ export default function ActivityPage() {
   );
 
   return (
-    <div className="bg-[#0B0F19] min-h-screen text-white">
-      <div className="ml-64 pt-20 px-6 space-y-6">
+    <div className="space-y-6 w-full max-w-7xl mx-auto">
         {/* HEADER */}
         <div>
           <h1 className="text-2xl font-bold">Activity Log</h1>
@@ -396,7 +395,6 @@ export default function ActivityPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

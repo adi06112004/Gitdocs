@@ -94,7 +94,7 @@ function* createProject(action) {
 
 function* updateProject(action) {
   try {
-    const { id, data } = action.payload;
+    const { id, data, quiet } = action.payload;
     const existingProject = yield select(getProjectByIdFromState, id);
     if (existingProject) {
       saveRollbackSnapshot(id, {
@@ -133,7 +133,9 @@ function* updateProject(action) {
       }),
     });
     yield put(fetchCommitsRequest());
-    toast.success("Project updated successfully!");
+    if (!quiet) {
+      toast.success("Project updated successfully!");
+    }
   } catch (error) {
     const message = error.response?.data?.message || error.message;
     yield put(updateProjectFailure(message));

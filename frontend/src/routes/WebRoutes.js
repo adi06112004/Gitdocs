@@ -11,4 +11,5 @@ export const WebRoutes = {
     VERSIONS: () => "/versions",
     ACTIVITY: () => "/activity",
     SETTINGS: () => "/settings",
+    DOCS: () => "/docs",
 }

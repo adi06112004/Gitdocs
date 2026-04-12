@@ -31,6 +31,20 @@ class UserApiService {
   deleteUser(id) {
     return baseApiService.delete(apiRoutes.users.delete.replace(':id', id));
   }
+
+  patchMe(data) {
+    return baseApiService.patch(apiRoutes.users.me, data);
+  }
+
+  patchPassword(data) {
+    return baseApiService.patch(apiRoutes.users.mePassword, data);
+  }
+
+  patchPreferences(notifications) {
+    return baseApiService.patch(apiRoutes.users.mePreferences, {
+      notifications,
+    });
+  }
 }
 
 export const userApiService = UserApiService.getInstance();
