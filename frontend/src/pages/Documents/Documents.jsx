@@ -82,20 +82,20 @@ export default function Documents() {
   };
 
   return (
-    <div className="bg-[#0B0F19] min-h-screen text-white">
-      <div className="pt-20 px-6 pl-[22%] space-y-6">
+    <div className="space-y-6 w-full max-w-7xl mx-auto">
         {/* HEADER */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold">Documents</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Documents</h1>
             <p className="text-sm text-gray-400">
               Manage and edit your documents
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => setShowCreateModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-medium transition"
+            className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-medium transition w-full sm:w-auto shrink-0"
           >
             + New Document
           </button>
@@ -117,9 +117,9 @@ export default function Documents() {
             className="bg-[#111827] border border-gray-700 px-3 py-2 rounded text-sm hover:border-indigo-500 transition cursor-pointer"
           >
             <option value="all">All Branches</option>
-            {branches.map((b) => (
-              <option key={b} value={b}>
-                {b}
+            {uniqueBranches.map((branchName) => (
+              <option key={branchName} value={branchName}>
+                {branchName}
               </option>
             ))}
           </select>
@@ -220,7 +220,6 @@ export default function Documents() {
             </button>
           </div>
         )}
-      </div>
 
       {/* CREATE DOCUMENT MODAL */}
       {showCreateModal && (

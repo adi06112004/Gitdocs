@@ -1,9 +1,11 @@
 import Project from "../models/Project.js";
 import Commit from "../models/Commit.js";
+import User from "../models/User.js";
 import {
   canAdminProject,
   canReadProject,
   canWriteProject,
+  normalizePermission,
 } from "../utils/projectPermissions.js";
 
 const serializeProjectForSnapshot = (project) => ({
@@ -14,9 +16,52 @@ const serializeProjectForSnapshot = (project) => ({
   branches: project.branches || ["main"],
   currentBranch: project.currentBranch || "main",
   collaborators: project.collaborators || [],
+  inviteHistory: project.inviteHistory || [],
   isPublic: Boolean(project.isPublic),
   isArchived: Boolean(project.isArchived),
 });
+
+async function buildCollaborationPayload(project) {
+  const list = project.collaborators || [];
+  const ownerUser = await User.findById(project.owner).select("name email");
+  const ids = list.map((c) => c.userId).filter(Boolean);
+  const users =
+    ids.length > 0
+      ? await User.find({ _id: { $in: ids } }).select("name email")
+      : [];
+  const byId = Object.fromEntries(
+    users.map((u) => [String(u._id), u]),
+  );
+
+  const members = list.map((c, idx) => {
+    const perm = normalizePermission(c.permission);
+    const u = byId[c.userId];
+    return {
+      id: `collab-${c.userId}-${idx}`,
+      userId: c.userId,
+      permission: perm,
+      role: perm,
+      username: u?.name,
+      name: u?.name,
+      email: u?.email,
+      status: "active",
+    };
+  });
+
+  const owner = {
+    userId: project.owner,
+    name: ownerUser?.name,
+    email: ownerUser?.email,
+  };
+
+  return {
+    members,
+    inviteHistory: (project.inviteHistory || []).map((h) =>
+      typeof h.toObject === "function" ? h.toObject() : h,
+    ),
+    owner,
+  };
+}
 
 export const getProjects = async (req, res) => {
   const projects = await Project.find({
@@ -75,13 +120,21 @@ export const updateProject = async (req, res) => {
 
   const beforeState = serializeProjectForSnapshot(project);
   const previousName = project.name;
-  const { name, description, currentBranch, branches } = req.body;
+  const { name, description, currentBranch, branches, isPublic, isArchived } =
+    req.body;
 
   if (name) project.name = name;
   if (description !== undefined) project.description = description;
   if (currentBranch) project.currentBranch = currentBranch;
   if (Array.isArray(branches)) {
     project.branches = Array.from(new Set([...project.branches, ...branches]));
+  }
+  if (isPublic !== undefined || isArchived !== undefined) {
+    if (!canAdminProject(project, req.user)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    if (isPublic !== undefined) project.isPublic = Boolean(isPublic);
+    if (isArchived !== undefined) project.isArchived = Boolean(isArchived);
   }
 
   await project.save();
@@ -195,6 +248,9 @@ export const rollbackProjectActivity = async (req, res) => {
     project.collaborators = Array.isArray(previous.collaborators)
       ? previous.collaborators
       : project.collaborators;
+    project.inviteHistory = Array.isArray(previous.inviteHistory)
+      ? previous.inviteHistory
+      : project.inviteHistory;
     project.isPublic = Boolean(previous.isPublic);
     project.isArchived = Boolean(previous.isArchived);
 
@@ -231,6 +287,7 @@ export const rollbackProjectActivity = async (req, res) => {
     branches: Array.isArray(previous.branches) ? previous.branches : ["main"],
     currentBranch: previous.currentBranch || "main",
     collaborators: Array.isArray(previous.collaborators) ? previous.collaborators : [],
+    inviteHistory: Array.isArray(previous.inviteHistory) ? previous.inviteHistory : [],
     isPublic: Boolean(previous.isPublic),
     isArchived: Boolean(previous.isArchived),
   });
@@ -256,7 +313,8 @@ export const getProjectCollaborators = async (req, res) => {
   if (!canReadProject(project, req.user)) {
     return res.status(403).json({ message: "Forbidden" });
   }
-  return res.json(project.collaborators || []);
+  const payload = await buildCollaborationPayload(project);
+  return res.json(payload);
 };
 
 export const upsertProjectCollaborator = async (req, res) => {
@@ -268,30 +326,66 @@ export const upsertProjectCollaborator = async (req, res) => {
     return res.status(403).json({ message: "Forbidden" });
   }
 
-  const { userId, permission } = req.body;
-  if (!userId) {
-    return res.status(400).json({ message: "userId is required" });
-  }
-  if (!["read", "write", "admin"].includes(permission)) {
+  const { email, userId: userIdBody, permission, role } = req.body || {};
+  const permissionNorm = normalizePermission(permission || role);
+
+  if (!["read", "write", "admin"].includes(permissionNorm)) {
     return res
       .status(400)
       .json({ message: "permission must be read, write, or admin" });
   }
-  if (userId === project.owner) {
+
+  let targetUserId = req.params.userId || userIdBody;
+  let invitedEmail = null;
+
+  if (!targetUserId && email) {
+    invitedEmail = String(email).toLowerCase().trim();
+    const invitedUser = await User.findOne({ email: invitedEmail });
+    if (!invitedUser) {
+      return res.status(404).json({
+        message: "No registered user with that email. They must sign up first.",
+      });
+    }
+    targetUserId = invitedUser.id;
+  }
+
+  if (!targetUserId) {
+    return res.status(400).json({ message: "email or userId is required" });
+  }
+
+  if (targetUserId === project.owner) {
     return res
       .status(400)
       .json({ message: "Owner already has full access by default" });
   }
 
-  const existing = project.collaborators.find((c) => c.userId === userId);
-  if (existing) {
-    existing.permission = permission;
-  } else {
-    project.collaborators.push({ userId, permission });
+  const targetUser = await User.findById(targetUserId).select("email name");
+  if (!targetUser) {
+    return res.status(404).json({ message: "User not found" });
   }
 
+  const historyEmail = invitedEmail || targetUser.email;
+  const isNew = !project.collaborators.some((c) => c.userId === targetUserId);
+  if (isNew) {
+    project.collaborators.push({ userId: targetUserId, permission: permissionNorm });
+  } else {
+    const existing = project.collaborators.find((c) => c.userId === targetUserId);
+    if (existing) existing.permission = permissionNorm;
+  }
+
+  if (!project.inviteHistory) project.inviteHistory = [];
+  project.inviteHistory.push({
+    email: historyEmail,
+    invitedBy: req.user.id,
+    permission: permissionNorm,
+    status: "accepted",
+    userId: targetUserId,
+    createdAt: new Date(),
+  });
+
   await project.save();
-  return res.json(project.collaborators);
+  const payload = await buildCollaborationPayload(project);
+  return res.status(isNew ? 201 : 200).json(payload);
 };
 
 export const removeProjectCollaborator = async (req, res) => {
@@ -306,5 +400,6 @@ export const removeProjectCollaborator = async (req, res) => {
   const { userId } = req.params;
   project.collaborators = project.collaborators.filter((c) => c.userId !== userId);
   await project.save();
-  return res.json(project.collaborators);
+  const payload = await buildCollaborationPayload(project);
+  return res.json(payload);
 };

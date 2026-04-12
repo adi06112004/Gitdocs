@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Settings as SettingsIcon,
@@ -8,7 +8,15 @@ import {
   Lock,
   User,
 } from "lucide-react";
-import { logout } from "../../store/slices/authSlice";
+import { logout, updateAuthUser } from "../../store/slices/authSlice";
+import { userApiService } from "../../services/UserApiService";
+
+const defaultNotifications = {
+  commits: true,
+  documents: true,
+  projects: true,
+  mentions: true,
+};
 
 export default function Settings() {
   const dispatch = useDispatch();
@@ -22,15 +30,39 @@ export default function Settings() {
     newPassword: "",
     confirmPassword: "",
   });
-  const [notifications, setNotifications] = useState({
-    commits: true,
-    documents: true,
-    projects: true,
-    mentions: true,
-  });
+  const [notifications, setNotifications] = useState(defaultNotifications);
 
   const [activeTab, setActiveTab] = useState("profile");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [savingPrefs, setSavingPrefs] = useState(false);
+
+  useEffect(() => {
+    setProfileData({
+      name: user?.name || "",
+      email: user?.email || "",
+    });
+    const n = user?.preferences?.notifications;
+    if (n && typeof n === "object") {
+      setNotifications({ ...defaultNotifications, ...n });
+    }
+  }, [user?.name, user?.email, user?.preferences]);
+
+  const showMessage = useCallback((text, isError = false) => {
+    if (isError) {
+      setError(text);
+      setMessage("");
+    } else {
+      setMessage(text);
+      setError("");
+    }
+    window.setTimeout(() => {
+      setMessage("");
+      setError("");
+    }, 4000);
+  }, []);
 
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
@@ -46,272 +78,270 @@ export default function Settings() {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSaveProfile = () => {
-    // TODO: Implement API call to update profile
-    setMessage("Profile updated successfully!");
-    setTimeout(() => setMessage(""), 3000);
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    setError("");
+    try {
+      const updated = await userApiService.patchMe({
+        name: profileData.name.trim(),
+        email: profileData.email.trim(),
+      });
+      dispatch(updateAuthUser(updated));
+      showMessage("Profile updated.");
+    } catch (e) {
+      showMessage(
+        e.response?.data?.message || e.message || "Update failed",
+        true,
+      );
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setMessage("Passwords do not match!");
-      setTimeout(() => setMessage(""), 3000);
+      showMessage("New passwords do not match.", true);
       return;
     }
-    // TODO: Implement API call to update password
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setMessage("Password updated successfully!");
-    setTimeout(() => setMessage(""), 3000);
+    setSavingPassword(true);
+    setError("");
+    try {
+      await userApiService.patchPassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      showMessage("Password updated.");
+    } catch (e) {
+      showMessage(
+        e.response?.data?.message || e.message || "Password update failed",
+        true,
+      );
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    setSavingPrefs(true);
+    try {
+      const updated = await userApiService.patchPreferences(notifications);
+      dispatch(updateAuthUser(updated));
+      showMessage("Notification preferences saved.");
+    } catch (e) {
+      showMessage(
+        e.response?.data?.message || e.message || "Could not save preferences",
+        true,
+      );
+    } finally {
+      setSavingPrefs(false);
+    }
   };
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
+    if (window.confirm("Log out of GitDocs?")) {
       dispatch(logout());
     }
   };
 
   return (
-    <div className="bg-[#0B0F19] min-h-screen text-white">
-      <div className="ml-64 pt-20 px-6 space-y-6">
-        {/* HEADER */}
-        <div>
-          <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-sm text-gray-400">
-            Manage your account and preferences
-          </p>
+    <div className="space-y-6 w-full max-w-4xl mx-auto">
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+          <SettingsIcon className="shrink-0 text-indigo-400" size={28} />
+          Settings
+        </h1>
+        <p className="text-sm text-gray-400 mt-1">
+          Account and dashboard preferences (stored on the server).
+        </p>
+      </div>
+
+      {message ? (
+        <div className="bg-emerald-700/90 text-white p-3 rounded text-sm">
+          {message}
         </div>
+      ) : null}
+      {error ? (
+        <div className="bg-red-600/90 text-white p-3 rounded text-sm">
+          {error}
+        </div>
+      ) : null}
 
-        {message && (
-          <div className="bg-green-600 text-white p-3 rounded">{message}</div>
-        )}
-
-        {/* TABS */}
-        <div className="bg-[#111827] border border-gray-800 rounded-xl">
-          <div className="flex border-b border-gray-800">
+      <div className="bg-[#111827] border border-gray-800 rounded-xl overflow-hidden">
+        <div className="flex flex-col sm:flex-row border-b border-gray-800">
+          {[
+            { id: "profile", label: "Profile", icon: User },
+            { id: "password", label: "Password", icon: Lock },
+            { id: "notifications", label: "Notifications", icon: Bell },
+          ].map(({ id, label, icon: Icon }) => (
             <button
-              onClick={() => setActiveTab("profile")}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-                activeTab === "profile"
+              key={id}
+              type="button"
+              onClick={() => setActiveTab(id)}
+              className={`flex-1 px-3 sm:px-4 py-3 text-sm font-medium transition flex items-center justify-center gap-2 ${
+                activeTab === id
                   ? "bg-indigo-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  : "text-gray-400 hover:text-white hover:bg-gray-800/80"
               }`}
             >
-              <User className="inline mr-2" size={16} />
-              Profile
+              <Icon size={16} className="shrink-0" />
+              <span className="truncate">{label}</span>
             </button>
-            <button
-              onClick={() => setActiveTab("password")}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-                activeTab === "password"
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Lock className="inline mr-2" size={16} />
-              Password
-            </button>
-            <button
-              onClick={() => setActiveTab("notifications")}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-                activeTab === "notifications"
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Bell className="inline mr-2" size={16} />
-              Notifications
-            </button>
-          </div>
-
-          {/* TAB CONTENT */}
-          <div className="p-6 space-y-6">
-            {/* PROFILE TAB */}
-            {activeTab === "profile" && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={profileData.name}
-                    onChange={handleProfileChange}
-                    className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={profileData.email}
-                    onChange={handleProfileChange}
-                    className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
-                  />
-                </div>
-
-                <button
-                  onClick={handleSaveProfile}
-                  className="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded text-sm flex items-center gap-2"
-                >
-                  <Save size={16} />
-                  Save Changes
-                </button>
-              </div>
-            )}
-
-            {/* PASSWORD TAB */}
-            {activeTab === "password" && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                    className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
-                  />
-                </div>
-
-                <button
-                  onClick={handleSavePassword}
-                  className="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded text-sm flex items-center gap-2"
-                >
-                  <Save size={16} />
-                  Update Password
-                </button>
-              </div>
-            )}
-
-            {/* NOTIFICATIONS TAB */}
-            {activeTab === "notifications" && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between bg-[#0B0F19] p-3 rounded border border-gray-700">
-                  <div>
-                    <p className="font-medium">Commit Notifications</p>
-                    <p className="text-xs text-gray-400">
-                      Get notified when commits are made
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.commits}
-                    onChange={() => handleNotificationChange("commits")}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between bg-[#0B0F19] p-3 rounded border border-gray-700">
-                  <div>
-                    <p className="font-medium">Document Updates</p>
-                    <p className="text-xs text-gray-400">
-                      Get notified when documents are updated
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.documents}
-                    onChange={() => handleNotificationChange("documents")}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between bg-[#0B0F19] p-3 rounded border border-gray-700">
-                  <div>
-                    <p className="font-medium">Project Changes</p>
-                    <p className="text-xs text-gray-400">
-                      Get notified when projects are modified
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.projects}
-                    onChange={() => handleNotificationChange("projects")}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between bg-[#0B0F19] p-3 rounded border border-gray-700">
-                  <div>
-                    <p className="font-medium">Mentions & Comments</p>
-                    <p className="text-xs text-gray-400">
-                      Get notified when you're mentioned
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={notifications.mentions}
-                    onChange={() => handleNotificationChange("mentions")}
-                    className="w-4 h-4 cursor-pointer"
-                  />
-                </div>
-
-                <button
-                  onClick={handleSaveProfile}
-                  className="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded text-sm flex items-center gap-2"
-                >
-                  <Save size={16} />
-                  Save Preferences
-                </button>
-              </div>
-            )}
-          </div>
+          ))}
         </div>
 
-        {/* LOGOUT SECTION */}
-        <div className="bg-red-600/10 border border-red-600/30 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-red-400 mb-2">
-            Danger Zone
-          </h3>
-          <p className="text-gray-400 text-sm mb-4">
-            Once you logout, you'll need to sign back in to access your
-            workspace.
-          </p>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-500 px-6 py-2 rounded text-sm flex items-center gap-2"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
+        <div className="p-4 sm:p-6 space-y-6">
+          {activeTab === "profile" && (
+            <div className="space-y-4 max-w-lg">
+              <div>
+                <label className="block text-sm font-medium mb-2" htmlFor="name">
+                  Full name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  name="name"
+                  value={profileData.name}
+                  onChange={handleProfileChange}
+                  className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={profileData.email}
+                  onChange={handleProfileChange}
+                  className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveProfile}
+                disabled={savingProfile}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-6 py-2 rounded text-sm flex items-center gap-2"
+              >
+                <Save size={16} />
+                {savingProfile ? "Saving…" : "Save profile"}
+              </button>
+            </div>
+          )}
+
+          {activeTab === "password" && (
+            <div className="space-y-4 max-w-lg">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Current password
+                </label>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  autoComplete="current-password"
+                  className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  New password
+                </label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  autoComplete="new-password"
+                  className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Confirm new password
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  autoComplete="new-password"
+                  className="w-full bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSavePassword}
+                disabled={savingPassword}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-6 py-2 rounded text-sm flex items-center gap-2"
+              >
+                <Save size={16} />
+                {savingPassword ? "Updating…" : "Update password"}
+              </button>
+            </div>
+          )}
+
+          {activeTab === "notifications" && (
+            <div className="space-y-4 max-w-xl">
+              {(
+                [
+                  ["commits", "Commits", "When commits are recorded"],
+                  ["documents", "Documents", "Document changes in your projects"],
+                  ["projects", "Projects", "Project updates"],
+                  ["mentions", "Mentions", "Comments and @mentions (future)"],
+                ]
+              ).map(([key, title, desc]) => (
+                <div
+                  key={key}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#0B0F19] p-3 rounded border border-gray-700"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm">{title}</p>
+                    <p className="text-xs text-gray-400">{desc}</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(notifications[key])}
+                    onChange={() => handleNotificationChange(key)}
+                    className="w-4 h-4 cursor-pointer shrink-0"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={handleSaveNotifications}
+                disabled={savingPrefs}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-6 py-2 rounded text-sm flex items-center gap-2"
+              >
+                <Save size={16} />
+                {savingPrefs ? "Saving…" : "Save preferences"}
+              </button>
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="bg-red-600/10 border border-red-600/30 rounded-xl p-4 sm:p-6">
+        <h3 className="text-lg font-semibold text-red-400 mb-2">Session</h3>
+        <p className="text-gray-400 text-sm mb-4">
+          Sign out on this device. You will need to sign in again to use the
+          dashboard.
+        </p>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="bg-red-600 hover:bg-red-500 px-6 py-2 rounded text-sm flex items-center gap-2"
+        >
+          <LogOut size={16} />
+          Log out
+        </button>
       </div>
     </div>
   );

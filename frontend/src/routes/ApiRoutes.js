@@ -46,6 +46,9 @@ export const apiRoutes = {
     create: "/users",
     update: "/users/:id",
     delete: "/users/:id",
+    me: "/users/me",
+    mePassword: "/users/me/password",
+    mePreferences: "/users/me/preferences",
   },
   collaborators: {
     getByProject: "/projects/:projectId/collaborators",

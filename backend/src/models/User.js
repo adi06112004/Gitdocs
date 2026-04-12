@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    preferences: {
+      notifications: {
+        commits: { type: Boolean, default: true },
+        documents: { type: Boolean, default: true },
+        projects: { type: Boolean, default: true },
+        mentions: { type: Boolean, default: true },
+      },
+    },
   },
   {
     timestamps: true,

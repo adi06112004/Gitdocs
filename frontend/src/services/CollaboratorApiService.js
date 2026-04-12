@@ -17,9 +17,17 @@ class CollaboratorApiService {
     return baseApiService.get(apiRoutes.collaborators.getByProject.replace(':projectId', projectId));
   }
 
-  // Invite a user to collaborate on a project
+  // Invite a user to collaborate on a project (email + permission: read|write|admin)
   inviteCollaborator(projectId, data) {
-    return baseApiService.post(apiRoutes.collaborators.invite.replace(':projectId', projectId), data);
+    const body = {
+      email: data.email,
+      userId: data.userId,
+      permission: data.permission || data.role || "read",
+    };
+    return baseApiService.post(
+      apiRoutes.collaborators.invite.replace(":projectId", projectId),
+      body,
+    );
   }
 
   // Remove a collaborator from a project
@@ -29,7 +37,15 @@ class CollaboratorApiService {
 
   // Update collaborator role/permissions
   updateCollaborator(projectId, userId, data) {
-    return baseApiService.put(apiRoutes.collaborators.update.replace(':projectId', projectId).replace(':userId', userId), data);
+    const body = {
+      permission: data.permission || data.role,
+    };
+    return baseApiService.put(
+      apiRoutes.collaborators.update
+        .replace(":projectId", projectId)
+        .replace(":userId", userId),
+      body,
+    );
   }
 }
 

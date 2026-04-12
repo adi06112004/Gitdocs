@@ -51,20 +51,20 @@ export default function Versions() {
   };
 
   return (
-    <div className="bg-[#0B0F19] min-h-screen text-white">
-      <div className="ml-64 pt-20 px-6 space-y-6">
+      <div className="space-y-6 w-full max-w-7xl mx-auto">
         {/* HEADER */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold">Versions & Branches</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Versions & Branches</h1>
             <p className="text-sm text-gray-400">
               Manage project branches and versions
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => setShowCreateModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+            className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
           >
             <Plus size={16} /> New Branch
           </button>
@@ -92,7 +92,7 @@ export default function Versions() {
               {currentBranches.map((branch) => (
                 <div
                   key={branch.id}
-                  className="bg-[#111827] border border-gray-800 rounded-xl p-4 flex justify-between items-center hover:border-indigo-500 transition"
+                  className="bg-[#111827] border border-gray-800 rounded-xl p-4 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center hover:border-indigo-500 transition"
                 >
                   <div className="flex items-center gap-3">
                     <GitBranch size={18} className="text-indigo-500" />
@@ -141,7 +141,6 @@ export default function Versions() {
             )}
           </>
         )}
-      </div>
 
       {/* CREATE BRANCH MODAL */}
       {showCreateModal && (
