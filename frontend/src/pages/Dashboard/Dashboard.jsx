@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import StatCard from "../../components/StatCard";
 import { fetchDocumentsRequest } from "../../store/slices/documentSlice";
@@ -40,13 +40,15 @@ export default function Dashboard() {
   const totalCommits = userCommits.length;
   const uniqueAuthors = new Set(userCommits.map((c) => c.author)).size;
 
-  const commitsByDay = userCommits.reduce((acc, commit) => {
-    const date = new Date(commit.createdAt || commit.updatedAt || Date.now());
-    if (Number.isNaN(date.getTime())) return acc;
-    const key = date.toISOString().slice(0, 10);
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
+  const commitsByDay = useMemo(() => {
+    return userCommits.reduce((acc, commit) => {
+      const date = new Date(commit.createdAt || commit.updatedAt || new Date().getTime());
+      if (Number.isNaN(date.getTime())) return acc;
+      const key = date.toISOString().slice(0, 10);
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  }, [userCommits]);
 
   const maxCommitsPerDay = Math.max(...Object.values(commitsByDay), 1);
 
