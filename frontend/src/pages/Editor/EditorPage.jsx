@@ -24,6 +24,8 @@ export default function EditorPage() {
   const [content, setContent] = useState("");
   const [currentDoc, setCurrentDoc] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
+  const [activeUsers, setActiveUsers] = useState([]);
+  const [socket, setSocket] = useState(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -55,12 +57,16 @@ export default function EditorPage() {
 
   useEffect(() => {
     if (!docId) return;
-    const socket = io("http://localhost:5000");
-    socketRef.current = socket;
+    const newSocket = io("http://localhost:5000");
+    socketRef.current = newSocket;
+    setSocket(newSocket);
 
-    socket.emit("join-document", docId);
+    newSocket.emit("join-document", { 
+      documentId: docId, 
+      user: user || { id: `anon-${Date.now()}`, name: "Anonymous" }
+    });
 
-    socket.on("document-update", ({ documentId, content: remoteContent }) => {
+    newSocket.on("document-update", ({ documentId, content: remoteContent }) => {
       if (documentId === docId) {
         setContent(remoteContent);
         setStatusMessage("Collaborator edit received.");
@@ -68,17 +74,24 @@ export default function EditorPage() {
       }
     });
 
-    socket.on("document-saved", ({ documentId }) => {
+    newSocket.on("document-saved", ({ documentId }) => {
       if (documentId === docId) {
         setStatusMessage("Saved by collaborator.");
         setTimeout(() => setStatusMessage(""), 2000);
       }
     });
 
+    newSocket.on("active-users-changed", ({ documentId, users }) => {
+      if (documentId === docId) {
+        setActiveUsers(users);
+      }
+    });
+
     return () => {
-      socket.disconnect();
+      newSocket.emit("leave-document", { documentId: docId });
+      newSocket.disconnect();
     };
-  }, [docId]);
+  }, [docId, user]);
 
   const handleContentChange = (value) => {
     setContent(value);
@@ -144,16 +157,16 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="bg-[#0B0F19] min-h-screen text-white flex">
-      <div className="mt-16 flex w-full h-[calc(100vh-64px)]">
+    <div className="bg-[#09090b] min-h-screen text-zinc-200 flex flex-col font-sans">
+      <div className="mt-16 flex flex-1 h-[calc(100vh-64px)] w-full overflow-hidden">
         {/* LEFT EDITOR */}
-        <div className="flex-1 flex flex-col border-r border-gray-800">
+        <div className="flex-1 flex flex-col border-r border-white/5 relative bg-[#09090b]">
           {/* TOP BAR */}
-          <div className="flex items-center justify-between px-6 py-3 border-b border-gray-800 bg-[#0f172a]">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-white/[0.02] backdrop-blur-xl z-30">
+            <div className="flex items-center gap-5">
               <button
                 onClick={handleBack}
-                className="flex items-center gap-2 text-gray-400 hover:text-white"
+                className="flex items-center gap-2 text-zinc-400 hover:text-zinc-100 transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg text-sm font-medium"
               >
                 <ArrowLeft size={16} />
                 Back
@@ -164,69 +177,120 @@ export default function EditorPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Document Title..."
-                className="bg-transparent text-lg font-semibold outline-none w-1/2"
+                className="bg-transparent text-lg font-bold outline-none w-[300px] sm:w-[400px] text-zinc-100 placeholder-zinc-600 focus:border-b focus:border-indigo-500/50 transition-all px-1"
               />
             </div>
 
-            <div className="flex gap-3 items-center">
-              <span className="text-xs text-gray-400">{statusMessage}</span>
+            <div className="flex gap-4 items-center">
+              {/* ACTIVE USERS AVATARS */}
+              {activeUsers.length > 0 && (
+                <div className="flex items-center mr-4">
+                  <div className="flex -space-x-2 mr-2">
+                    {activeUsers.slice(0, 5).map((activeUser, index) => (
+                      <div 
+                        key={activeUser.id || index}
+                        title={activeUser.name}
+                        className="w-8 h-8 rounded-full border-2 border-[#09090b] flex items-center justify-center text-[10px] font-bold text-white shadow-sm ring-1 ring-white/10"
+                        style={{ backgroundColor: activeUser.color || '#3b82f6' }}
+                      >
+                        {activeUser.name ? activeUser.name.charAt(0).toUpperCase() : '?'}
+                      </div>
+                    ))}
+                    {activeUsers.length > 5 && (
+                      <div className="w-8 h-8 rounded-full border-2 border-[#09090b] bg-white/10 flex items-center justify-center text-[10px] font-bold text-zinc-300">
+                        +{activeUsers.length - 5}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-zinc-400 font-medium">
+                    {activeUsers.length} active
+                  </span>
+                </div>
+              )}
+
+              {statusMessage && (
+                <span className="text-xs font-medium text-indigo-400 bg-indigo-400/10 px-3 py-1 rounded-full animate-pulse">
+                  {statusMessage}
+                </span>
+              )}
               <button
                 onClick={handleSave}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded"
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all active:scale-95"
               >
-                <Save size={14} /> Save
+                <Save size={16} /> Save
               </button>
 
               <button
                 onClick={handleCommit}
-                className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded"
+                className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-500/20 active:scale-95 text-white font-medium rounded-lg text-sm transition-all"
               >
-                <GitCommit size={14} /> Commit
+                <GitCommit size={16} /> Commit
               </button>
             </div>
           </div>
 
           {/* TIPTAP EDITOR */}
-          <Editor content={content} onChange={handleContentChange} />
+          <Editor 
+            content={content} 
+            onChange={handleContentChange} 
+            socket={socket}
+            docId={docId}
+          />
         </div>
 
         {/* RIGHT VERSION PANEL */}
-        <div className="w-80 bg-[#0f172a] p-4">
-          <h2 className="text-sm font-semibold mb-4 text-gray-300">
-            VERSION HISTORY
-          </h2>
-
-          <div className="space-y-4">
-            {currentDoc && (
-              <div className="border-l border-gray-700 pl-3">
-                <p className="text-sm">Last updated</p>
-                <p className="text-xs text-gray-400">
-                  {new Date(currentDoc.updatedAt).toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            <div className="border-l border-gray-700 pl-3">
-              <p className="text-sm">Created</p>
-              <p className="text-xs text-gray-400">
-                {currentDoc
-                  ? new Date(currentDoc.createdAt).toLocaleString()
-                  : "Just now"}
-              </p>
-            </div>
+        <div className="w-80 bg-white/[0.01] border-l border-white/5 flex flex-col relative">
+          <div className="p-5 border-b border-white/5 bg-white/[0.02]">
+            <h2 className="text-xs font-bold tracking-widest text-zinc-500 uppercase">
+              VERSION HISTORY
+            </h2>
           </div>
 
-          {currentDoc && (
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold mb-2 text-gray-300">
-                Document Info
-              </h3>
-              <div className="text-xs text-gray-400 space-y-1">
-                <p>Branch: {currentDoc.branch}</p>
-                <p>Project ID: {currentDoc.projectId}</p>
+          <div className="p-5 flex-1 overflow-y-auto custom-scrollbar space-y-6">
+            <div className="space-y-4">
+              {currentDoc && (
+                <div className="relative pl-4 border-l-2 border-indigo-500/50">
+                  <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.8)]" />
+                  <p className="text-sm font-medium text-zinc-200">Last updated</p>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    {new Date(currentDoc.updatedAt).toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              <div className="relative pl-4 border-l-2 border-white/10">
+                <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-zinc-600" />
+                <p className="text-sm font-medium text-zinc-200">Created</p>
+                <p className="text-xs text-zinc-400 mt-1">
+                  {currentDoc
+                    ? new Date(currentDoc.createdAt).toLocaleString()
+                    : "Just now"}
+                </p>
               </div>
             </div>
-          )}
+
+            {currentDoc && (
+              <div className="mt-8 pt-6 border-t border-white/5">
+                <h3 className="text-xs font-bold tracking-widest text-zinc-500 uppercase mb-4">
+                  Document Info
+                </h3>
+                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Branch</p>
+                    <p className="text-sm font-medium text-indigo-300 font-mono bg-indigo-500/10 px-2 py-0.5 rounded inline-block">
+                      {currentDoc.branch}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Project ID</p>
+                    <p className="text-xs text-zinc-400 font-mono truncate" title={currentDoc.projectId}>
+                      {currentDoc.projectId}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

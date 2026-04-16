@@ -42,14 +42,71 @@ await pubsub.subscribe('document-updates', (data) => {
   }
 });
 
+const activeDocumentUsers = {}; // Mapping { documentId: { socketId: userObject } }
+
+const broadcastActiveUsers = (documentId) => {
+  if (activeDocumentUsers[documentId]) {
+    const users = Object.values(activeDocumentUsers[documentId]);
+    io.to(`document:${documentId}`).emit("active-users-changed", {
+      documentId,
+      users,
+    });
+  }
+};
+
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
 
-  socket.on("join-document", (documentId) => {
+  socket.on("join-document", ({ documentId, user }) => {
     if (!documentId) return;
     const room = `document:${documentId}`;
     socket.join(room);
+
+    // Track active user
+    if (user) {
+      if (!activeDocumentUsers[documentId]) activeDocumentUsers[documentId] = {};
+      const colors = ['#f43f5e', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#06b6d4'];
+      const userColor = colors[Math.floor(Math.random() * colors.length)];
+      
+      activeDocumentUsers[documentId][socket.id] = { ...user, color: userColor };
+      socket.currentDocumentId = documentId;
+      broadcastActiveUsers(documentId);
+    }
+
     socket.emit("joined-document", { documentId });
+  });
+
+  socket.on("leave-document", ({ documentId }) => {
+    if (!documentId) return;
+    const room = `document:${documentId}`;
+    socket.leave(room);
+
+    if (activeDocumentUsers[documentId] && activeDocumentUsers[documentId][socket.id]) {
+      delete activeDocumentUsers[documentId][socket.id];
+      if (Object.keys(activeDocumentUsers[documentId]).length === 0) {
+        delete activeDocumentUsers[documentId];
+      } else {
+        broadcastActiveUsers(documentId);
+      }
+    }
+    if (socket.currentDocumentId === documentId) {
+      delete socket.currentDocumentId;
+    }
+  });
+
+  socket.on("cursor-update", ({ documentId, position }) => {
+    if (!documentId || !activeDocumentUsers[documentId] || !activeDocumentUsers[documentId][socket.id]) return;
+    
+    const userBlock = activeDocumentUsers[documentId][socket.id];
+    
+    // Broadcast cursor position immediately
+    socket.to(`document:${documentId}`).emit("cursor-update", {
+      documentId,
+      userId: userBlock.id,
+      name: userBlock.name || "Anonymous",
+      color: userBlock.color,
+      position
+    });
   });
 
   socket.on("document-change", ({ documentId, content }) => {
@@ -110,6 +167,15 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("Socket disconnected:", socket.id);
+    if (socket.currentDocumentId && activeDocumentUsers[socket.currentDocumentId]) {
+      const docId = socket.currentDocumentId;
+      delete activeDocumentUsers[docId][socket.id];
+      if (Object.keys(activeDocumentUsers[docId]).length === 0) {
+        delete activeDocumentUsers[docId];
+      } else {
+        broadcastActiveUsers(docId);
+      }
+    }
   });
 });
 

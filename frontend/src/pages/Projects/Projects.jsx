@@ -106,7 +106,7 @@ export default function Projects() {
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm shrink-0 w-full sm:w-auto"
+            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-indigo-500/25 border border-indigo-500/50 transition-all duration-300 active:scale-95 shrink-0 w-full sm:w-auto"
           >
             + New Project
           </button>
@@ -122,13 +122,14 @@ export default function Projects() {
             <div
               key={project.id}
               onClick={() => navigate(`/project/${project.id}`)}
-              className="bg-[#111827] border border-gray-800 rounded-xl p-5 cursor-pointer hover:border-indigo-500 transition"
+              className="group relative bg-white/[0.02] border border-white/5 rounded-2xl p-6 cursor-pointer hover:bg-white/[0.04] hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300"
             >
-              <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300 pointer-events-none" />
+              <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
                 {/* LEFT */}
                 <div className="min-w-0">
-                  <h2 className="text-lg font-semibold break-words">{project.name}</h2>
-                  <p className="text-sm text-gray-400 mt-1 line-clamp-2">
+                  <h2 className="text-xl font-semibold break-words text-zinc-100 group-hover:text-indigo-300 transition-colors">{project.name}</h2>
+                  <p className="text-sm text-zinc-400 mt-1.5 line-clamp-2">
                     {project.description}
                   </p>
                 </div>
@@ -213,20 +214,21 @@ export default function Projects() {
 
       {/* CREATE PROJECT MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#111827] p-6 rounded-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Create New Project</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+          <div className="bg-[#09090b] border border-white/10 shadow-2xl p-7 rounded-2xl w-96 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-violet-500" />
+            <h2 className="text-xl font-bold mb-5 text-zinc-100">Create New Project</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Project Name
                 </label>
                 <input
                   type="text"
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
-                  className="w-full bg-[#0B0F19] border border-gray-600 rounded px-3 py-2 text-white"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:border-indigo-500 focus:outline-none transition-colors"
                   placeholder="Enter project name"
                 />
               </div>
@@ -238,7 +240,7 @@ export default function Projects() {
                 <textarea
                   value={newProjectDescription}
                   onChange={(e) => setNewProjectDescription(e.target.value)}
-                  className="w-full bg-[#0B0F19] border border-gray-600 rounded px-3 py-2 text-white h-20 resize-none"
+                  className="w-full bg-white/5 border border-white/10 focus:border-indigo-500 focus:outline-none transition-colors rounded-lg px-3 py-2 text-white h-24 resize-none"
                   placeholder="Enter project description"
                 />
               </div>
@@ -254,7 +256,7 @@ export default function Projects() {
               <button
                 onClick={handleCreateProject}
                 disabled={!newProjectName.trim() || loading}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded text-sm disabled:opacity-50"
+                className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 border border-indigo-500/50 shadow-lg shadow-indigo-500/20 active:scale-95 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-all"
               >
                 {loading ? "Creating..." : "Create Project"}
               </button>

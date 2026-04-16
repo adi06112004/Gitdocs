@@ -238,7 +238,7 @@ export default function ProjectDetailPage() {
             value={currentBranch}
             onChange={(e) => handleBranchChange(e.target.value)}
             disabled={!canWrite}
-            className="bg-[#111827] border border-gray-700 px-3 py-2 rounded text-sm min-w-[8rem] disabled:opacity-50"
+            className="bg-[#09090b] border border-white/10 px-3 py-2 rounded-lg text-sm min-w-[8rem] disabled:opacity-50 hover:border-indigo-500 focus:outline-none transition-colors cursor-pointer text-zinc-200"
           >
             {project.branches.map((b) => (
               <option key={b} value={b}>
@@ -250,7 +250,7 @@ export default function ProjectDetailPage() {
             type="button"
             onClick={() => setShowCreateBranchModal(true)}
             disabled={!canWrite}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 px-3 py-2 rounded text-sm"
+            className="bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 shadow-sm"
           >
             + Branch
           </button>
@@ -258,30 +258,30 @@ export default function ProjectDetailPage() {
             type="button"
             onClick={() => setShowCreateDocModal(true)}
             disabled={!canWrite}
-            className="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 px-3 py-2 rounded text-sm"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-emerald-500/20 active:scale-95 transition-all duration-300 border border-emerald-500/50"
           >
             + Document
           </button>
           <button
             type="button"
             onClick={() => setShowCollaboratorsModal(true)}
-            className="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-sm"
+            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-indigo-500/25 active:scale-95 transition-all duration-300 border border-indigo-500/50"
           >
             Collaborators
           </button>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-b border-gray-800 pb-2">
+      <div className="flex flex-wrap gap-2 border-b border-white/5 pb-2">
         {["workspace", "settings"].map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all duration-300 ${
               activeTab === tab
-                ? "bg-indigo-600 text-white"
-                : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]"
+                : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300"
             }`}
           >
             {tab}
@@ -291,48 +291,49 @@ export default function ProjectDetailPage() {
 
       {activeTab === "workspace" && (
         <>
-          <div className="bg-[#111827] border border-gray-800 rounded-xl p-4">
-            <h2 className="text-sm font-semibold mb-3 text-gray-200">
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <h2 className="text-sm font-semibold mb-4 text-zinc-100">
               Branch collaboration (push / pull)
             </h2>
             <div className="flex flex-col lg:flex-row lg:flex-wrap lg:items-end gap-3">
               <div className="w-full sm:w-auto">
-                <p className="text-xs text-gray-400 mb-1">Mode</p>
+                <p className="text-xs text-zinc-500 mb-1.5 font-medium">Mode</p>
                 <select
                   value={syncMode}
                   onChange={(e) => setSyncMode(e.target.value)}
                   disabled={!canWrite}
-                  className="w-full sm:w-auto bg-[#0B0F19] border border-gray-700 px-3 py-2 rounded text-sm disabled:opacity-50"
+                  className="w-full sm:w-auto bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:border-indigo-500 focus:outline-none transition-colors cursor-pointer text-zinc-300"
                 >
-                  <option value="push">Push</option>
-                  <option value="pull">Pull</option>
+                  <option value="push" className="bg-[#09090b]">Push</option>
+                  <option value="pull" className="bg-[#09090b]">Pull</option>
                 </select>
               </div>
               <div className="w-full sm:w-auto flex-1 min-w-[8rem]">
-                <p className="text-xs text-gray-400 mb-1">Source branch</p>
+                <p className="text-xs text-zinc-500 mb-1.5 font-medium">Source branch</p>
                 <select
                   value={syncSourceBranch}
                   onChange={(e) => setSyncSourceBranch(e.target.value)}
                   disabled={!canWrite}
-                  className="w-full bg-[#0B0F19] border border-gray-700 px-3 py-2 rounded text-sm disabled:opacity-50"
+                  className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:border-indigo-500 focus:outline-none transition-colors cursor-pointer text-zinc-300"
                 >
                   {project.branches.map((b) => (
-                    <option key={b} value={b}>
+                    <option key={b} value={b} className="bg-[#09090b]">
                       {b}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="w-full sm:w-auto flex-1 min-w-[8rem]">
-                <p className="text-xs text-gray-400 mb-1">Target branch</p>
+                <p className="text-xs text-zinc-500 mb-1.5 font-medium">Target branch</p>
                 <select
                   value={syncTargetBranch}
                   onChange={(e) => setSyncTargetBranch(e.target.value)}
                   disabled={!canWrite}
-                  className="w-full bg-[#0B0F19] border border-gray-700 px-3 py-2 rounded text-sm disabled:opacity-50"
+                  className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:border-indigo-500 focus:outline-none transition-colors cursor-pointer text-zinc-300"
                 >
                   {project.branches.map((b) => (
-                    <option key={b} value={b}>
+                    <option key={b} value={b} className="bg-[#09090b]">
                       {b}
                     </option>
                   ))}
@@ -342,12 +343,12 @@ export default function ProjectDetailPage() {
                 type="button"
                 onClick={handleBranchSync}
                 disabled={!canWrite}
-                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 px-4 py-2 rounded text-sm"
+                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 px-5 py-2 rounded-lg text-sm font-semibold shadow-lg shadow-indigo-500/25 border border-indigo-500/50 active:scale-95 transition-all duration-300"
               >
                 Sync branches
               </button>
               {statusMessage ? (
-                <p className="text-xs text-indigo-300 w-full lg:w-auto">
+                <p className="text-xs text-indigo-300 w-full lg:w-auto font-medium">
                   {statusMessage}
                 </p>
               ) : null}
@@ -365,39 +366,39 @@ export default function ProjectDetailPage() {
             </div>
           ) : null}
 
-          <div className="bg-[#111827] border border-gray-800 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-800">
-              <h2 className="text-sm font-semibold text-gray-200">
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+            <div className="px-5 py-4 border-b border-white/5 bg-white/[0.01]">
+              <h2 className="text-sm font-semibold text-zinc-100">
                 Documents ({currentBranch})
               </h2>
             </div>
-            <div className="divide-y divide-gray-800">
+            <div className="divide-y divide-white/5">
               {projectDocuments.map((doc) => (
                 <button
                   type="button"
                   key={doc.id}
                   onClick={() => navigate(`/editor?docId=${doc.id}`)}
-                  className="w-full text-left px-4 py-3 hover:bg-[#0B0F19] transition flex items-center justify-between group"
+                  className="w-full text-left px-5 py-4 hover:bg-white/[0.04] transition-colors duration-200 flex items-center justify-between group"
                 >
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <div className="w-4 h-4 bg-indigo-600 rounded-sm flex-shrink-0"></div>
+                  <div className="flex items-center space-x-4 min-w-0 flex-1">
+                    <div className="w-4 h-4 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-[3px] flex-shrink-0 shadow-sm shadow-indigo-500/50 group-hover:scale-110 transition-transform"></div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-medium text-gray-100 truncate">
+                      <h3 className="font-semibold text-zinc-200 group-hover:text-indigo-300 transition-colors truncate">
                         {doc.name}
                       </h3>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-zinc-500 mt-0.5">
                         Updated {new Date(doc.updatedAt).toLocaleDateString()}{" "}
                         by {doc.lastEditedBy || "Unknown"}
                       </p>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-500 flex-shrink-0">
+                  <div className="text-[10px] uppercase font-semibold tracking-wider text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full flex-shrink-0">
                     {doc.branch}
                   </div>
                 </button>
               ))}
               {projectDocuments.length === 0 && !docLoading ? (
-                <div className="px-4 py-8 text-center text-gray-400 text-sm">
+                <div className="px-5 py-10 text-center text-zinc-500 text-sm">
                   No documents in this branch.{" "}
                   {canWrite ? "Create one to get started." : null}
                 </div>
@@ -405,27 +406,28 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          <div className="bg-[#111827] border border-gray-800 rounded-xl p-4">
-            <h2 className="text-sm font-semibold mb-3 text-gray-200">
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-violet-500" />
+            <h2 className="text-sm font-semibold mb-4 text-zinc-100 ml-2">
               Git history ({currentBranch})
             </h2>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 pl-2">
               {filteredCommits.slice(0, 15).map((commit) => (
                 <div
                   key={commit.id}
-                  className="border border-gray-800 rounded p-3 bg-[#0B0F19]"
+                  className="border border-white/5 rounded-xl p-4 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
                 >
-                  <p className="text-sm text-gray-100 break-words">
+                  <p className="text-sm font-medium text-zinc-200 break-words">
                     {commit.message}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {new Date(commit.createdAt).toLocaleString()} ·{" "}
-                    {commit.author}
+                  <p className="text-xs text-zinc-500 mt-2 flex items-center justify-between">
+                    <span>{new Date(commit.createdAt).toLocaleString()}</span>
+                    <span className="bg-white/5 px-2 py-0.5 rounded text-zinc-400">{commit.author}</span>
                   </p>
                 </div>
               ))}
               {filteredCommits.length === 0 ? (
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-zinc-500 ml-2">
                   No commits on this branch.
                 </p>
               ) : null}
@@ -436,17 +438,17 @@ export default function ProjectDetailPage() {
 
       {activeTab === "settings" && (
         <div className="space-y-6">
-          <div className="bg-[#111827] border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-white mb-2">
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-zinc-100 mb-2">
               Project access
             </h2>
             <p className="text-sm text-gray-400 mb-4">
               Visibility and archive flags (admin on this project).
             </p>
             <div className="space-y-4 max-w-xl">
-              <label className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-[#0B0F19] border border-gray-700">
+              <label className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:border-indigo-500/50 transition-colors cursor-pointer group">
                 <div>
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-semibold text-zinc-200 group-hover:text-indigo-300">
                     Public project
                   </span>
                   <p className="text-xs text-gray-500">
@@ -460,12 +462,12 @@ export default function ProjectDetailPage() {
                     toggleVisibility("isPublic", e.target.checked)
                   }
                   disabled={!canAdmin}
-                  className="w-4 h-4 shrink-0 disabled:opacity-40"
+                  className="w-4 h-4 shrink-0 disabled:opacity-40 accent-indigo-500"
                 />
               </label>
-              <label className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg bg-[#0B0F19] border border-gray-700">
+              <label className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:border-amber-500/50 transition-colors cursor-pointer group">
                 <div>
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-semibold text-zinc-200 group-hover:text-amber-300">
                     Archived
                   </span>
                   <p className="text-xs text-gray-500">
@@ -480,11 +482,11 @@ export default function ProjectDetailPage() {
                     toggleVisibility("isArchived", e.target.checked)
                   }
                   disabled={!canAdmin}
-                  className="w-4 h-4 shrink-0 disabled:opacity-40"
+                  className="w-4 h-4 shrink-0 disabled:opacity-40 accent-amber-500"
                 />
               </label>
               {!canAdmin ? (
-                <p className="text-xs text-amber-400/90">
+                <p className="text-xs text-amber-500/90 bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg font-medium">
                   Only project owners and project admins can change these
                   options.
                 </p>
@@ -492,8 +494,8 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          <div className="bg-[#111827] border border-gray-800 rounded-xl p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">
+          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-zinc-100 mb-5">
               Collaborators & invites
             </h2>
             <ProjectCollaboratorsPanel
@@ -506,31 +508,31 @@ export default function ProjectDetailPage() {
 
       {showCreateDocModal ? (
         <Modal onClose={() => setShowCreateDocModal(false)}>
-          <h2 className="text-lg font-bold mb-4">Create document</h2>
+          <h2 className="text-lg font-bold mb-4 text-zinc-100 relative z-10">Create document</h2>
           <input
             value={newDocName}
             onChange={(e) => setNewDocName(e.target.value)}
             placeholder="Document name"
-            className="w-full mb-3 px-3 py-2 bg-[#0B0F19] border border-gray-600 rounded text-sm"
+            className="w-full mb-3 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-colors relative z-10"
           />
           <textarea
             value={newDocContent}
             onChange={(e) => setNewDocContent(e.target.value)}
             placeholder="Content"
-            className="w-full h-32 px-3 py-2 bg-[#0B0F19] border border-gray-600 rounded text-sm"
+            className="w-full h-32 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-colors relative z-10 resize-none"
           />
-          <div className="flex flex-col-reverse sm:flex-row gap-2 mt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 mt-5 relative z-10">
             <button
               type="button"
               onClick={() => setShowCreateDocModal(false)}
-              className="flex-1 bg-gray-600 px-3 py-2 rounded text-sm"
+              className="flex-1 bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] px-4 py-2 rounded-lg text-sm font-medium transition-all"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleCreateDocument}
-              className="flex-1 bg-green-600 px-3 py-2 rounded text-sm"
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-white border border-emerald-500/50"
             >
               Create
             </button>
@@ -540,25 +542,25 @@ export default function ProjectDetailPage() {
 
       {showCreateBranchModal ? (
         <Modal onClose={() => setShowCreateBranchModal(false)}>
-          <h2 className="text-lg font-bold mb-4">Create branch</h2>
+          <h2 className="text-lg font-bold mb-4 text-zinc-100 relative z-10">Create branch</h2>
           <input
             value={newBranchName}
             onChange={(e) => setNewBranchName(e.target.value)}
             placeholder="feature/name"
-            className="w-full px-3 py-2 bg-[#0B0F19] border border-gray-600 rounded text-sm"
+            className="w-full px-3 py-2 mb-2 bg-white/5 border border-white/10 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors relative z-10"
           />
-          <div className="flex flex-col-reverse sm:flex-row gap-2 mt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 mt-5 relative z-10">
             <button
               type="button"
               onClick={() => setShowCreateBranchModal(false)}
-              className="flex-1 bg-gray-600 px-3 py-2 rounded text-sm"
+              className="flex-1 bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] px-4 py-2 rounded-lg text-sm font-medium transition-all"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleCreateBranch}
-              className="flex-1 bg-indigo-600 px-3 py-2 rounded text-sm"
+              className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-indigo-500/25 active:scale-95 transition-all text-white border border-indigo-500/50"
             >
               Create
             </button>
@@ -578,12 +580,13 @@ export default function ProjectDetailPage() {
 
 function Modal({ children, onClose }) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#111827] p-4 sm:p-6 rounded-lg w-full max-w-md border border-gray-800 max-h-[90vh] overflow-y-auto relative">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
+      <div className="bg-[#09090b] border border-white/10 shadow-2xl p-6 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto relative custom-scrollbar">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-violet-500 pointer-events-none" />
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-white text-sm"
+          className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 text-sm p-1 rounded hover:bg-white/5 transition-colors z-20 focus:outline-none"
           aria-label="Close"
         >
           ✕

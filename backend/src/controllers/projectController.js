@@ -171,16 +171,15 @@ export const deleteProject = async (req, res) => {
   await Document.deleteMany({ projectId: project.id });
   await Branch.deleteMany({ projectId: project.id });
 
-  // Create a commit for the deletion (optional, since project is deleted)
-  // await Commit.create({
-  //   message: `Deleted project: ${project.name}`,
-  //   type: "delete",
-  //   projectId: project.id,
-  //   documentId: "project-meta",
-  //   branch: project.currentBranch || "main",
-  //   author: req.user.id,
-  //   snapshot: JSON.stringify({ before: serializeProjectForSnapshot(project) }),
-  // });
+  await Commit.create({
+    message: `Deleted project: ${project.name}`,
+    type: "delete",
+    projectId: project.id,
+    documentId: "project-meta",
+    branch: project.currentBranch || "main",
+    author: req.user.id,
+    snapshot: JSON.stringify({ before: serializeProjectForSnapshot(project) }),
+  });
 
   await project.deleteOne();
   return res.json({ message: "Project deleted" });
@@ -222,9 +221,43 @@ export const rollbackProjectActivity = async (req, res) => {
     });
   }
 
-  if (!["update", "delete"].includes(activity.type)) {
-    return res.status(400).json({ message: "Only update/delete activities can be rolled back" });
+  if (!["update", "delete", "commit"].includes(activity.type)) {
+    return res.status(400).json({ message: "Only update, delete, or commit activities can be rolled back" });
   }
+
+  // --- Document Rollback Improvisation ---
+  if (activity.type === "commit" || activity.documentId) {
+    const document = await Document.findById(activity.documentId);
+    if (!document) {
+      return res.status(404).json({ message: "Document not found or already deleted." });
+    }
+
+    // Find the previous commit for this document before this activity
+    const previousCommit = await Commit.findOne({
+      documentId: activity.documentId,
+      createdAt: { $lt: activity.createdAt }
+    }).sort({ createdAt: -1 });
+
+    const previousContent = previousCommit ? previousCommit.snapshot : "";
+
+    document.content = previousContent;
+    document.lastEditedBy = req.user.id;
+    document.updatedAt = new Date();
+    await document.save();
+
+    await Commit.create({
+      message: `Rolled back to previous version of document`,
+      projectId: activity.projectId,
+      documentId: activity.documentId,
+      branch: activity.branch || "main",
+      author: req.user.id,
+      snapshot: previousContent,
+      type: "commit"
+    });
+
+    return res.json({ message: "Document rollback completed successfully." });
+  }
+  // ---------------------------------------
 
   let snapshot;
   try {

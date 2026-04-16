@@ -39,10 +39,10 @@ const Sidebar = memo(function Sidebar({ mobileOpen, onClose }) {
           navigate(path);
           onClose?.();
         }}
-        className={`px-3 py-2 rounded-lg cursor-pointer text-sm transition ${
+        className={`px-3 py-2 cursor-pointer text-sm font-medium transition-all duration-300 ${
           isActive
-            ? "bg-indigo-600 text-white"
-            : "text-gray-400 hover:bg-gray-800 hover:text-white"
+            ? "bg-gradient-to-r from-indigo-500/10 to-transparent border-l-2 border-indigo-500 text-indigo-300"
+            : "text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] border-l-2 border-transparent"
         }`}
       >
         {label}
@@ -67,7 +67,7 @@ const Sidebar = memo(function Sidebar({ mobileOpen, onClose }) {
             ? { willChange: "transform" }
             : undefined
         }
-        className={`w-64 max-w-[85vw] fixed top-16 left-0 h-[calc(100vh-64px)] bg-[#0f172a] border-r border-gray-800 p-4 flex flex-col justify-between z-50 transition-transform duration-150 ease-out motion-reduce:transition-none
+        className={`w-64 max-w-[85vw] fixed top-16 left-0 h-[calc(100vh-64px)] bg-[#09090b]/80 backdrop-blur-xl border-r border-white/5 p-4 flex flex-col justify-between z-50 transition-transform duration-300 ease-out motion-reduce:transition-none
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0 md:will-change-auto`}
       >
@@ -86,11 +86,11 @@ const Sidebar = memo(function Sidebar({ mobileOpen, onClose }) {
         </div>
 
         <div>
-          <div className="bg-[#1e293b] p-3 rounded-xl">
-            <p className="text-sm text-white font-semibold truncate">
+          <div className="bg-white/[0.02] border border-white/5 p-3 rounded-xl transition-all hover:bg-white/[0.04]">
+            <p className="text-sm text-zinc-100 font-semibold truncate">
               {user?.name || "User"}
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-zinc-500">
               {user?.role === "admin" ? "Administrator" : "Team Member"}
             </p>
           </div>
