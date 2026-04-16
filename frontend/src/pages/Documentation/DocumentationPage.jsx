@@ -26,9 +26,10 @@ const Section = ({ id, icon: Icon, title, children }) => (
 export default function DocumentationPage() {
   return (
     <div className="w-full max-w-3xl mx-auto pb-12">
-      <div className="border border-gray-800 bg-[#111827]/80 rounded-2xl p-5 sm:p-8">
-        <div className="flex items-start gap-3 mb-2">
-          <span className="p-2 rounded-xl bg-indigo-600/20 text-indigo-300">
+      <div className="border border-white/5 bg-white/[0.02] rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
+        <div className="flex items-start gap-4 mb-2 relative z-10">
+          <span className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-400 shadow-lg shadow-indigo-500/10 border border-indigo-500/20">
             <BookOpen size={28} />
           </span>
           <div>
@@ -43,9 +44,9 @@ export default function DocumentationPage() {
 
         <nav
           aria-label="On this page"
-          className="mt-6 p-4 rounded-xl bg-[#0B0F19] border border-gray-800 text-sm"
+          className="mt-8 p-5 rounded-2xl bg-white/[0.03] border border-white/5 shadow-inner relative z-10"
         >
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest mb-3">
             On this page
           </p>
           <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1 text-indigo-300">
@@ -235,21 +236,21 @@ export default function DocumentationPage() {
 
         <Section id="api" icon={Server} title="API reference (backend)">
           <p className="text-gray-400">
-            Base URL: <code className="text-indigo-300 bg-black/30 px-1 rounded">http://localhost:5000/api</code>{" "}
+            Base URL: <code className="text-indigo-300 bg-black/40 border border-white/10 px-1.5 py-0.5 rounded-md">http://localhost:5000/api</code>{" "}
             (use your deployed URL in production). Send{" "}
-            <code className="text-indigo-300 bg-black/30 px-1 rounded">Authorization: Bearer &lt;token&gt;</code>{" "}
+            <code className="text-indigo-300 bg-black/40 border border-white/10 px-1.5 py-0.5 rounded-md">Authorization: Bearer &lt;token&gt;</code>{" "}
             for protected routes.
           </p>
-          <div className="overflow-x-auto rounded-lg border border-gray-800 mt-4">
+          <div className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.01] mt-6 shadow-xl">
             <table className="w-full text-xs sm:text-sm text-left">
-              <thead className="bg-[#0B0F19] text-gray-400">
+              <thead className="bg-white/[0.02] text-zinc-400 border-b border-white/5">
                 <tr>
-                  <th className="p-2 font-medium">Method</th>
-                  <th className="p-2 font-medium">Path</th>
-                  <th className="p-2 font-medium">Purpose</th>
+                  <th className="px-4 py-3 font-semibold tracking-wider">Method</th>
+                  <th className="px-4 py-3 font-semibold tracking-wider">Path</th>
+                  <th className="px-4 py-3 font-semibold tracking-wider">Purpose</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800">
+              <tbody className="divide-y divide-white/5 text-zinc-300">
                 {[
                   ["POST", "/auth/register", "Create account"],
                   ["POST", "/auth/login", "Get JWT"],
@@ -268,12 +269,12 @@ export default function DocumentationPage() {
                   ["GET/POST/DELETE", "/versions", "Branches"],
                   ["POST", "/versions/sync", "Branch document sync"],
                 ].map(([method, path, purpose]) => (
-                  <tr key={path + method} className="hover:bg-gray-900/50">
-                    <td className="p-2 text-amber-300 whitespace-nowrap">{method}</td>
-                    <td className="p-2 font-mono text-gray-300 whitespace-nowrap">
+                  <tr key={path + method} className="hover:bg-white/[0.04] transition-colors">
+                    <td className="px-4 py-3 text-emerald-400 font-medium whitespace-nowrap">{method}</td>
+                    <td className="px-4 py-3 font-mono text-indigo-300 whitespace-nowrap text-xs">
                       {path}
                     </td>
-                    <td className="p-2 text-gray-400">{purpose}</td>
+                    <td className="px-4 py-3 text-zinc-400">{purpose}</td>
                   </tr>
                 ))}
               </tbody>
