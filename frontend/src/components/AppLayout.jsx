@@ -6,7 +6,9 @@ export default function AppLayout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0B0F19] text-white">
+    <div className="relative min-h-screen bg-[#09090b] text-zinc-100 selection:bg-indigo-500/30">
+      <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none" />
       <Sidebar
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}

@@ -56,8 +56,8 @@ function SearchField({
 }) {
   return (
     <div className="relative flex-1 min-w-0 w-full">
-      <div className="flex items-center gap-2 bg-[#111827] px-3 py-2 rounded-lg border border-gray-800 focus-within:border-indigo-500 transition-colors">
-        <Search size={16} className="text-gray-400 shrink-0" />
+      <div className="flex items-center gap-2 bg-white/[0.03] px-3 py-2 rounded-lg border border-white/5 focus-within:border-indigo-500/50 hover:bg-white/[0.05] transition-all duration-300">
+        <Search size={16} className="text-zinc-500 shrink-0" />
         <input
           type="search"
           autoComplete="off"
@@ -81,7 +81,7 @@ function SearchField({
               setSearchOpen(true);
             }
           }}
-          className="bg-transparent outline-none text-sm w-full text-gray-300 placeholder-gray-500 min-w-0"
+          className="bg-transparent outline-none text-sm w-full text-zinc-300 placeholder-zinc-500 min-w-0"
         />
         {isAuthenticated && debouncedQuery.length >= 2 && !hasSearchHits ? (
           <span className="text-xs text-gray-500 shrink-0 hidden sm:inline">
@@ -396,7 +396,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="w-full fixed top-0 z-50 border-b border-white/10 bg-[#0B0F19] md:bg-[#0B0F19]/85 md:backdrop-blur-md supports-[backdrop-filter]:md:bg-[#0B0F19]/70">
+    <nav className="w-full fixed top-0 z-50 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-2xl supports-[backdrop-filter]:bg-[#09090b]/60">
       <div className="px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-2 min-w-0">
         <div
           className="flex items-center gap-2 cursor-pointer shrink-0 min-w-0"
@@ -468,7 +468,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={() => navigate(WebRoutes.PROJECTS())}
-                className="hidden lg:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md transition-colors"
+                className="hidden lg:flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-lg shadow-indigo-500/25 border border-indigo-500/50 transition-all duration-300 active:scale-95"
               >
                 <Plus size={16} />
                 New Project
@@ -500,7 +500,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={() => navigate(WebRoutes.AUTH())}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-3 py-2 rounded-lg shadow-md transition-colors"
+                className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-lg shadow-indigo-500/25 border border-indigo-500/50 transition-all duration-300 active:scale-95"
               >
                 Get Started
               </button>

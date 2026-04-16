@@ -28,135 +28,16 @@ export default function ActivityPage() {
     dispatch(fetchCommitsRequest());
   }, [dispatch]);
 
-  const parseSnapshot = (snapshot) => {
-    if (!snapshot) return null;
-    try {
-      return JSON.parse(snapshot);
-    } catch {
-      return null;
-    }
-  };
-
-  const getRollbackCache = () => {
-    try {
-      return JSON.parse(localStorage.getItem(ROLLBACK_CACHE_KEY) || "{}");
-    } catch {
-      return {};
-    }
-  };
-
-  const fallbackRollback = async (activity) => {
-    const actionType = getActionType(activity);
-    const cache = getRollbackCache();
-    const cached = activity?.projectId ? cache[activity.projectId] : null;
-
-    if (actionType === "update") {
-      const match = String(activity.message || "").match(
-        /Updated project:\s*(.*?)\s*->\s*(.*)$/i,
-      );
-      const parsed = parseSnapshot(activity.snapshot);
-      let previousName =
-        parsed?.before?.name ||
-        cached?.before?.name ||
-        (match ? match[1] : null);
-      let previousDescription =
-        parsed?.before?.description ??
-        cached?.before?.description ??
-        projects.find((p) => p.id === activity.projectId)?.description ??
-        "";
-
-      if (!activity.projectId || !previousName) {
-        throw new Error(
-          "Rollback snapshot not found for this update activity.",
-        );
-      }
-
-      await projectApiService.updateProject(activity.projectId, {
-        name: previousName,
-        description: previousDescription,
-      });
-      return "Rollback completed via fallback update.";
-    }
-
-    if (actionType === "delete") {
-      const parsed = parseSnapshot(activity.snapshot);
-      let deletedName =
-        parsed?.before?.name ||
-        cached?.before?.name ||
-        String(activity.message || "").match(
-          /Deleted project:\s*(.*)$/i,
-        )?.[1] ||
-        null;
-      let deletedDescription =
-        parsed?.before?.description ||
-        cached?.before?.description ||
-        "Restored from deleted activity";
-
-      if (!deletedName) {
-        throw new Error(
-          "Rollback snapshot not found for this delete activity.",
-        );
-      }
-
-      await projectApiService.createProject({
-        name: deletedName,
-        description: deletedDescription,
-      });
-      return "Deleted project restored via fallback create.";
-    }
-
-    if (
-      activity.documentId &&
-      (actionType === "commit" || actionType === "update")
-    ) {
-      // Rollback document update: find the previous commit's snapshot
-      const documentCommits = commits
-        .filter(
-          (c) =>
-            c.documentId === activity.documentId &&
-            c.createdAt < activity.createdAt,
-        )
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const previousCommit = documentCommits[0];
-      const previousContent = previousCommit ? previousCommit.snapshot : "";
-      await documentApiService.updateDocument(activity.documentId, {
-        content: previousContent,
-      });
-      // Create a rollback commit
-      await commitApiService.createCommit({
-        message: `Rolled back document update`,
-        projectId: activity.projectId,
-        documentId: activity.documentId,
-        branch: activity.branch,
-        snapshot: previousContent,
-      });
-      return "Document rollback completed.";
-    }
-
-    throw new Error(
-      "Rollback is supported only for update/delete activities and document commits.",
-    );
-  };
 
   const handleRollback = async (activity) => {
     try {
-      if (rollbackApiAvailable && !activity.documentId) {
-        await projectApiService.rollbackProjectActivity(activity.id, {
-          projectId: activity.projectId,
-          type: getActionType(activity),
-          message: activity.message,
-          branch: activity.branch,
-          author: activity.author,
-        });
-      } else {
-        const fallbackMessage = await fallbackRollback(activity);
-        setRollbackStatus(fallbackMessage);
-        dispatch(fetchProjectsRequest());
-        dispatch(fetchCommitsRequest());
-        dispatch(fetchDocumentsRequest());
-        setTimeout(() => setRollbackStatus(""), 2200);
-        return;
-      }
+      await projectApiService.rollbackProjectActivity(activity.id, {
+        projectId: activity.projectId,
+        type: getActionType(activity),
+        message: activity.message,
+        branch: activity.branch,
+        author: activity.author,
+      });
 
       setRollbackStatus("Rollback completed successfully.");
       dispatch(fetchProjectsRequest());
@@ -164,26 +45,6 @@ export default function ActivityPage() {
       dispatch(fetchDocumentsRequest());
       setTimeout(() => setRollbackStatus(""), 1800);
     } catch (error) {
-      if (error?.response?.status === 404) {
-        setRollbackApiAvailable(false);
-        localStorage.setItem(ROLLBACK_API_AVAILABLE_KEY, "false");
-        try {
-          const fallbackMessage = await fallbackRollback(activity);
-          setRollbackStatus(fallbackMessage);
-          dispatch(fetchProjectsRequest());
-          dispatch(fetchCommitsRequest());
-          dispatch(fetchDocumentsRequest());
-          setTimeout(() => setRollbackStatus(""), 2200);
-          return;
-        } catch (fallbackError) {
-          const fallbackText =
-            fallbackError?.message || "Fallback rollback failed.";
-          setRollbackStatus(fallbackText);
-          setTimeout(() => setRollbackStatus(""), 2800);
-          return;
-        }
-      }
-
       const message = error?.response?.data?.message || "Rollback failed.";
       setRollbackStatus(message);
       setTimeout(() => setRollbackStatus(""), 2600);
@@ -269,9 +130,9 @@ export default function ActivityPage() {
       </div>
 
       {/* FILTERS */}
-      <div className="bg-[#111827] border border-gray-800 rounded-xl p-4 flex gap-4 flex-wrap">
+      <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex gap-4 flex-wrap shadow-xl">
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
             Activity Type
           </label>
           <select
@@ -280,7 +141,7 @@ export default function ActivityPage() {
               setFilterType(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm"
+            className="bg-[#09090b] border border-white/10 hover:border-indigo-500 transition-colors focus:outline-none rounded-lg px-3 py-2 text-zinc-200 text-sm cursor-pointer shadow-sm"
           >
             <option value="all">All Activities</option>
             <option value="create">Created</option>
@@ -291,7 +152,7 @@ export default function ActivityPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
             Project
           </label>
           <select
@@ -300,7 +161,7 @@ export default function ActivityPage() {
               setFilterProject(e.target.value);
               setCurrentPage(1);
             }}
-            className="bg-[#0B0F19] border border-gray-700 rounded px-3 py-2 text-white text-sm"
+            className="bg-[#09090b] border border-white/10 hover:border-indigo-500 transition-colors focus:outline-none rounded-lg px-3 py-2 text-zinc-200 text-sm cursor-pointer shadow-sm"
           >
             <option value="">All Projects</option>
             {projects.map((project) => (
@@ -324,12 +185,12 @@ export default function ActivityPage() {
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="text-gray-400">Loading activity...</div>
+          <div className="text-zinc-500 animate-pulse font-medium">Loading activity...</div>
         </div>
       ) : filteredCommits.length === 0 ? (
-        <div className="bg-[#111827] border border-gray-800 rounded-xl p-12 text-center">
-          <Activity size={48} className="mx-auto text-gray-600 mb-4" />
-          <p className="text-gray-400">No activities found.</p>
+        <div className="bg-white/[0.02] border border-white/5 border-dashed rounded-2xl p-12 text-center shadow-xl">
+          <Activity size={48} className="mx-auto text-zinc-600 mb-4 opacity-50" />
+          <p className="text-zinc-400">No activities found.</p>
         </div>
       ) : (
         <>
@@ -341,12 +202,13 @@ export default function ActivityPage() {
                 return (
                   <div
                     key={activity.id || index}
-                    className="bg-[#111827] border border-gray-800 rounded-xl p-4"
+                    className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 hover:bg-white/[0.04] hover:-translate-y-1 hover:border-white/10 hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
                   >
-                    <div>
+                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500/50 to-violet-500/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="ml-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="font-medium">{activity.message}</h3>
+                          <h3 className="font-semibold text-zinc-200">{activity.message}</h3>
                           <div className="flex gap-2 mt-2 flex-wrap">
                             <span className="text-xs bg-indigo-600/20 text-indigo-300 px-2 py-1 rounded">
                               {actionType}
@@ -427,32 +289,33 @@ export default function ActivityPage() {
       )}
 
       {/* ACTIVITY STATS */}
-      <div className="bg-[#111827] border border-gray-800 rounded-xl p-6">
-        <h2 className="text-lg font-semibold mb-4">Activity Statistics</h2>
+      <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <h2 className="text-lg font-semibold mb-6 text-zinc-100">Activity Statistics</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-indigo-500">
+          <div className="text-center p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-indigo-500/30 transition-colors">
+            <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-indigo-400 to-indigo-600">
               {actionCounts.commit + actionCounts.sync}
             </p>
-            <p className="text-xs text-gray-400 mt-1">Total Commits</p>
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-2">Total Commits</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-500">
+          <div className="text-center p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-emerald-500/30 transition-colors">
+            <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-emerald-400 to-emerald-600">
               {actionCounts.create}
             </p>
-            <p className="text-xs text-gray-400 mt-1">Created</p>
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-2">Created</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-blue-500">
+          <div className="text-center p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-blue-500/30 transition-colors">
+            <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-blue-400 to-blue-600">
               {actionCounts.update}
             </p>
-            <p className="text-xs text-gray-400 mt-1">Updated</p>
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-2">Updated</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-red-500">
+          <div className="text-center p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:border-red-500/30 transition-colors">
+            <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-red-400 to-red-600">
               {actionCounts.delete}
             </p>
-            <p className="text-xs text-gray-400 mt-1">Deleted</p>
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mt-2">Deleted</p>
           </div>
         </div>
       </div>

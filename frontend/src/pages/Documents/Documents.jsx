@@ -97,7 +97,7 @@ export default function Documents() {
         <button
           type="button"
           onClick={() => setShowCreateModal(true)}
-          className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-medium transition w-full sm:w-auto shrink-0"
+          className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-5 py-2.5 rounded-xl text-sm font-semibold shadow-lg shadow-indigo-500/25 border border-indigo-500/50 transition-all duration-300 active:scale-95 w-full sm:w-auto shrink-0"
         >
           + New Document
         </button>
@@ -116,7 +116,7 @@ export default function Documents() {
             setFilterBranch(e.target.value);
             setCurrentPage(1);
           }}
-          className="bg-[#111827] border border-gray-700 px-3 py-2 rounded text-sm hover:border-indigo-500 transition cursor-pointer"
+          className="bg-[#09090b] border border-white/10 px-3 py-2 rounded-lg text-sm hover:border-indigo-500 focus:outline-none transition-colors cursor-pointer text-zinc-200 shadow-sm"
         >
           <option value="all">All Branches</option>
           {uniqueBranches.map((branchName) => (
@@ -132,8 +132,8 @@ export default function Documents() {
       </div>
 
       {/* DOCUMENTS LIST */}
-      <div className="overflow-hidden rounded-xl border border-gray-800 bg-[#111827]">
-        <div className="grid grid-cols-[2.4fr_1fr_1fr_0.9fr_0.9fr] gap-4 px-5 py-4 text-xs uppercase tracking-wide text-gray-400 border-b border-gray-800">
+      <div className="overflow-hidden rounded-2xl bg-white/[0.02] border border-white/5 shadow-xl">
+        <div className="grid grid-cols-[2.4fr_1fr_1fr_0.9fr_0.9fr] gap-4 px-6 py-4 text-xs font-semibold uppercase tracking-wider text-zinc-500 border-b border-white/5">
           <div>Document</div>
           <div>Branch</div>
           <div>Project</div>
@@ -142,16 +142,16 @@ export default function Documents() {
         </div>
         {currentDocs.length > 0 ? (
           currentDocs.map((doc) => (
-            <div
+              <div
               key={doc.id}
               onClick={() => navigate(`/editor/${doc.id}`)}
-              className="grid grid-cols-[2.4fr_1fr_1fr_0.9fr_0.9fr] gap-4 px-5 py-4 border-b border-gray-800 cursor-pointer hover:bg-gray-900 transition"
+              className="grid grid-cols-[2.4fr_1fr_1fr_0.9fr_0.9fr] gap-4 px-6 py-4 border-b border-white/5 cursor-pointer hover:bg-white/[0.04] transition-colors duration-200 group items-center"
             >
               <div className="space-y-1">
-                <div className="font-medium text-white truncate">
+                <div className="font-semibold text-zinc-100 group-hover:text-indigo-300 transition-colors truncate">
                   {doc.name}
                 </div>
-                <p className="text-xs text-gray-400 truncate">
+                <p className="text-xs text-zinc-500 truncate">
                   {doc.content
                     ? doc.content.substring(0, 80) + "..."
                     : "No content yet"}
@@ -169,7 +169,7 @@ export default function Documents() {
                   "Untitled"}
               </div>
               <div className="text-sm text-gray-300 truncate">
-                {doc.createdBy || doc.author || "You"}
+                {doc.createdBy === user?.id ? "You" : (doc.authorName || doc.author || doc.createdBy || "Unknown")}
               </div>
               <div className="text-sm text-gray-400">
                 {new Date(doc.createdAt).toLocaleDateString()}
@@ -227,32 +227,33 @@ export default function Documents() {
 
       {/* CREATE DOCUMENT MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#111827] p-8 rounded-lg w-96 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-6">Create New Document</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity p-4">
+          <div className="bg-[#09090b] border border-white/10 shadow-2xl p-7 rounded-2xl w-96 relative overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-violet-500" />
+            <h2 className="text-xl font-bold mb-6 text-zinc-100">Create New Document</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Document Name *
                 </label>
                 <input
                   type="text"
                   value={newDocName}
                   onChange={(e) => setNewDocName(e.target.value)}
-                  className="w-full bg-[#0B0F19] border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                   placeholder="e.g., API Documentation"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Select Project *
                 </label>
                 <select
                   value={selectedProject}
                   onChange={(e) => setSelectedProject(e.target.value)}
-                  className="w-full bg-[#0B0F19] border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500 transition cursor-pointer"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
                 >
                   <option value="">Choose a project...</option>
                   {projects.length > 0 ? (
@@ -268,29 +269,29 @@ export default function Documents() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-zinc-300 mb-1.5">
                   Content (Optional)
                 </label>
                 <textarea
                   value={newDocContent}
                   onChange={(e) => setNewDocContent(e.target.value)}
-                  className="w-full bg-[#0B0F19] border border-gray-600 rounded px-3 py-2 text-white h-24 resize-none placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white h-24 resize-none placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
                   placeholder="Enter document content..."
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 mt-8">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm transition"
+                className="flex-1 bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] px-4 py-2 rounded-lg text-sm transition-all duration-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateDocument}
                 disabled={!newDocName.trim() || !selectedProject || loading}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
+                className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 border border-indigo-500/50 shadow-lg shadow-indigo-500/20 active:scale-95 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-all"
               >
                 {loading ? "Creating..." : "Create Document"}
               </button>

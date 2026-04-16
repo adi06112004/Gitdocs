@@ -1,5 +1,151 @@
 @import "tailwindcss";
 
 body {
-    background-color: black;
+    font-family: 'Outfit', sans-serif;
+    background-color: #09090b;
+    color: #f4f4f5;
+}
+
+/* Custom Typography for Tiptap Editor */
+.ProseMirror {
+  outline: none !important;
+  color: #e4e4e7;
+  line-height: 1.7;
+  padding-bottom: 2rem;
+}
+
+.ProseMirror > * + * {
+  margin-top: 1em;
+}
+
+.ProseMirror h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+  color: #fafafa;
+}
+
+.ProseMirror h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 1.8em;
+  margin-bottom: 0.5em;
+  color: #f4f4f5;
+}
+
+.ProseMirror h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #e4e4e7;
+}
+
+.ProseMirror p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid #6366f1;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  font-style: italic;
+  color: #a1a1aa;
+  background: rgba(99, 102, 241, 0.05);
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.ProseMirror pre {
+  background: #000000;
+  color: #e4e4e7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow-x: auto;
+}
+
+.ProseMirror code {
+  color: #818cf8;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.ProseMirror pre code {
+  color: inherit;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875em;
+}
+
+.ProseMirror hr {
+  border-color: rgba(255, 255, 255, 0.1);
+  margin: 2em 0;
+}
+
+.ProseMirror strong {
+  color: #fafafa;
+  font-weight: 700;
+}
+
+/* Remote Collaborative Cursors */
+.remote-cursor-container {
+  pointer-events: none;
+  z-index: 50;
+}
+
+.remote-cursor-stick {
+  position: absolute;
+  top: -0.2em;
+  left: 0;
+  width: 2px;
+  height: 1.4em;
+  opacity: 0.8;
+  animation: cursor-pulse 1s infinite alternate;
+}
+
+.remote-cursor-label {
+  position: absolute;
+  top: -1.6em;
+  left: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border-bottom-left-radius: 0;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+@keyframes cursor-pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
 }
