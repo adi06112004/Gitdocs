@@ -92,7 +92,7 @@ export const deleteVersion = async (req, res) => {
     await project.save();
   }
 
-  await branch.remove();
+  await branch.deleteOne();
   return res.status(200).json({ message: "Branch deleted" });
 };
 

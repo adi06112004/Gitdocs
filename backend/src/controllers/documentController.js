@@ -1,5 +1,6 @@
 import Document from "../models/Document.js";
 import Project from "../models/Project.js";
+import User from "../models/User.js";
 import { canReadProject, canWriteProject } from "../utils/projectPermissions.js";
 import cache from "../utils/cache.js";
 
@@ -29,7 +30,20 @@ export const getDocuments = async (req, res) => {
   }
 
   // If not in cache, fetch from database
-  documents = await Document.find(filter).sort({ updatedAt: -1 });
+  const rawDocs = await Document.find(filter).sort({ updatedAt: -1 });
+  
+  const userIds = [...new Set(rawDocs.map(d => d.createdBy).filter(Boolean))];
+  const users = await User.find({ _id: { $in: userIds } }, "name");
+  const userMap = users.reduce((acc, u) => {
+    acc[u._id.toString()] = u.name;
+    return acc;
+  }, {});
+
+  documents = rawDocs.map(doc => {
+    const docObj = doc.toJSON();
+    docObj.authorName = userMap[doc.createdBy] || "Unknown";
+    return docObj;
+  });
 
   // Cache the result for 5 minutes
   await cache.set(cacheKey, documents, 300);
