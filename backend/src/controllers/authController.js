@@ -1,16 +1,20 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 const JWT_EXPIRES = "7d";
 
+
 const signToken = (userId) => jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 
+// Validate user credentials before login
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ message: "Name, email and password are required" });
   }
+
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
@@ -26,6 +30,7 @@ export const register = async (req, res) => {
   });
 };
 
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -39,11 +44,15 @@ export const login = async (req, res) => {
 
   const token = signToken(user.id);
   return res.json({ user: user.toJSON(), token });
+
 };
+
+
 
 export const logout = async (req, res) => {
   return res.json({ message: "Successfully logged out" });
 };
+
 
 export const fetchMe = async (req, res) => {
   if (!req.user) {

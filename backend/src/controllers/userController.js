@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 
+
 const defaultNotifications = () => ({
   commits: true,
   documents: true,
@@ -7,10 +8,12 @@ const defaultNotifications = () => ({
   mentions: true,
 });
 
+
 export const getUsers = async (req, res) => {
   const users = await User.find().select("-password");
   return res.json(users);
 };
+
 
 export const getUserById = async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
@@ -20,6 +23,7 @@ export const getUserById = async (req, res) => {
   return res.json(user);
 };
 
+
 export const getMe = async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
   if (!user) {
@@ -28,12 +32,14 @@ export const getMe = async (req, res) => {
   return res.json(user.toJSON());
 };
 
+
 export const updateMe = async (req, res) => {
   const { name, email } = req.body || {};
   const user = await User.findById(req.user.id);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
+
 
   if (email !== undefined && email !== user.email) {
     const nextEmail = String(email).toLowerCase().trim();
@@ -44,6 +50,7 @@ export const updateMe = async (req, res) => {
     user.email = nextEmail;
   }
 
+
   if (name !== undefined) {
     const trimmed = String(name).trim();
     if (trimmed.length < 2) {
@@ -52,9 +59,12 @@ export const updateMe = async (req, res) => {
     user.name = trimmed;
   }
 
+
   await user.save();
   return res.json(user.toJSON());
+
 };
+
 
 export const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
@@ -64,6 +74,7 @@ export const changePassword = async (req, res) => {
   if (String(newPassword).length < 6) {
     return res.status(400).json({ message: "New password must be at least 6 characters" });
   }
+
 
   const user = await User.findById(req.user.id).select("+password");
   if (!user) {
@@ -77,6 +88,7 @@ export const changePassword = async (req, res) => {
   await user.save();
   return res.json({ message: "Password updated" });
 };
+
 
 export const updatePreferences = async (req, res) => {
   const user = await User.findById(req.user.id);
@@ -95,6 +107,7 @@ export const updatePreferences = async (req, res) => {
     ...existingPlain,
   };
 
+  
   const next = { ...base };
   for (const key of ["commits", "documents", "projects", "mentions"]) {
     if (incoming[key] !== undefined) {
